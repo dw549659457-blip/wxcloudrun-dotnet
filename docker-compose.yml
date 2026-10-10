@@ -1,0 +1,20 @@
+# 仅本地 MySQL，不用于生产；应用直接使用 dotnet run 或部署独立应用镜像。
+services:
+  mysql:
+    image: mysql:8.0.45
+    ports:
+      - "127.0.0.1:3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_LOCAL_ROOT_PASSWORD:?请设置本地数据库管理密码}
+      MYSQL_DATABASE: vegetable_dev
+      MYSQL_USER: vegetable_app
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请设置本地应用数据库密码}
+    volumes:
+      - vegetable_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+volumes:
+  vegetable_mysql:

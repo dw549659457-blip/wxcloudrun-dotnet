@@ -1,8 +1,14 @@
-# directories
-**/bin/
-**/obj/
-**/out/
-
-# files
-Dockerfile*
-**/*.md
+.git
+.agents
+.codex
+.aws
+**/bin
+**/obj
+**/TestResults
+.env*
+!.env.example
+tests
+attachments
+**/*.pfx
+**/*.key
+**/*.sql.gz

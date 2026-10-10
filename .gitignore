@@ -30,3 +30,12 @@ artifacts/
 .cloudbase/
 # Other Dockerfiles
 Dockerfile.*
+# Local runtime secrets / database files / test results
+.env
+.env.*
+!.env.example
+!.env.cloudrun.example
+TestResults/
+*.sql.gz
+*.xlsx
+.local/
