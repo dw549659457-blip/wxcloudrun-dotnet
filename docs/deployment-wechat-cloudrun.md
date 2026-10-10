@@ -21,8 +21,8 @@
 | MYSQL_ADDRESS=host:port | 兼容原模板；或设MYSQL_HOST和MYSQL_PORT |
 | MYSQL_USERNAME | 兼容原模板；或设MYSQL_USER |
 | MYSQL_PASSWORD | 保留同名，安全录入控制台 |
-| MYSQL_DATABASE | **必须明确**独立业务库 |
-| MYSQL_ALLOW_ROOT | 本次明确使用root时设true，默认关闭 |
+| MYSQL_DATABASE | 本服务镜像默认vegetable_prod；控制台可覆盖，应明确为独立业务库 |
+| MYSQL_ALLOW_ROOT | 源码默认关闭；本服务镜像按用户授权默认true，控制台可覆盖 |
 | MYSQL_POOL_LIMIT | 默认10 |
 | MYSQL_SSL_MODE | 默认Preferred；按真实数据库支持选择VerifyCA/VerifyFull，使用MYSQL_SSL_CA_FILE指定受信CA路径后实测，勿通过关闭校验解决失败 |
 | PORT | 默认80，与平台实际容器端口一致 |
@@ -53,7 +53,7 @@ dotnet build aspnetapp.sln -c Release --no-restore
 docker build -t vegetable-api .
 ```
 
-Docker为多阶段，固定SDK10.0.401和ASP.NET运行时10.0.12；运行时只包含发布输出，USER app，不带数据库、测试或本地环境文件。镜像拉取必须允许mcr.microsoft.com及其官方下载重定向域名；当前开发环境centralus.data.mcr.microsoft.com受限导致403，已记录到环境草稿。不得用不可信镜像或跳过TLS代替。
+Docker为多阶段，固定SDK10.0.401和ASP.NET运行时10.0.12；运行时只包含发布输出，保留原模板默认运行用户和80端口，不带数据库、测试或本地环境文件。镜像拉取必须允许mcr.microsoft.com及其官方下载重定向域名；当前开发环境centralus.data.mcr.microsoft.com受限导致403，已记录到环境草稿。不得用不可信镜像或跳过TLS代替。
 
 代码就绪并按用户授权推送到已关联main分支后，云托管按根目录Dockerfile构建新版本。保留原版本可回退。健康检查先核对端口，再配置/health/live和/health/ready（平台若只支持单一路径，按其能力选择）。最小/最大副本在控制台设置；连接配额约束为“最大副本数×MYSQL_POOL_LIMIT+迁移/运维连接”，实际额度以实例为准。例如原模板max5、pool10意味着至少考虑50个应用连接，不能默认数据库允许。
 
@@ -69,3 +69,5 @@ Docker为多阶段，固定SDK10.0.401和ASP.NET运行时10.0.12；运行时只�
 - 发布后用健康检查和只读接口验证，**不要**反复调用旧/api/count或生产出库/清零接口检测上线。
 
 回滚：选择保留的旧应用版本，确认环境变量和端口与该版本一致；数据库不自动回滚，恢复数据必须先在隔离库验证，再按受控故障处理方案操作生产。
+
+容器启动Coredump的已复现原因、修复与日志获取步骤见[deployment-startup-troubleshooting.md](deployment-startup-troubleshooting.md)。

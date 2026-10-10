@@ -11,7 +11,9 @@ RUN dotnet publish aspnetapp/aspnetapp.csproj -c Release --no-restore -o /app /p
 FROM mcr.microsoft.com/dotnet/aspnet:10.0.12 AS runtime
 WORKDIR /app
 COPY --from=build /app ./
-ENV ASPNETCORE_ENVIRONMENT=Production PORT=80
+# 当前用户已明确选择 vegetable_prod 与托管 root；控制台同名变量可覆盖。
+# 密码继续由微信云托管 MYSQL_PASSWORD 注入，不放进镜像或 Git。
+ENV ASPNETCORE_ENVIRONMENT=Production PORT=80 MYSQL_DATABASE=vegetable_prod MYSQL_ALLOW_ROOT=true
 EXPOSE 80
-USER app
+# 保持原模板默认运行用户，兼容云托管 80 端口监听。
 ENTRYPOINT ["dotnet", "aspnetapp.dll"]

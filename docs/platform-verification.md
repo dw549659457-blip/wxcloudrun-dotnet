@@ -13,7 +13,7 @@
 | 小程序环境ID/服务名/备案/手机号资格 | 未取得实际控制台值/凭证 | 待配置/确认 |
 | 生产数据库版本与TLS | 仅本地MySQL8.0.45经过验证 | 云端待核对 |
 | 自动备份保留与恢复 | 本地有备份/恢复脚本；未读取托管备份配置 | 待核实 |
-| Docker镜像构建 | mcr.microsoft.com的centralus.data.mcr.microsoft.com重定向403 | 受开发环境网络限制，构建尚未完成 |
+| Docker镜像与容器启动 | 用户日志确认dotnet-4jwm-004构建成功，启动缺MYSQL_DATABASE | 原部署失败原因已确认；启动修复待平台重新构建部署，本地Docker仍受开发网络限制 |
 | Git交付与代码流水线 | 用户明确要求提交并推送 | 目标main；流水线构建和云端发布仍需平台核实 |
 
 平台入口：微信云托管cloud.weixin.qq.com，官方模板WeixinCloud/wxcloudrun-dotnet，以及微信小程序wx.login、callContainer、getPhoneNumber和服务器code2Session/stable_token官方文档。相关产品域名/默认限制不能互相套用。本次没有借助旧截图宣称用户控制台配置已验证。
