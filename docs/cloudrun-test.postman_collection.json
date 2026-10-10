@@ -1,0 +1,34 @@
+{
+  "info": {
+    "name": "微信云托管 MySQL 与后台只读验证",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "https://your-cloudrun-service-host"},
+    {"key": "adminUsername", "value": "admin"},
+    {"key": "adminPassword", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "1. MySQL连接检查（无参数）",
+      "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/health/ready"}
+    },
+    {
+      "name": "2. 业务管理员登录（保留Cookie）",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": "{{baseUrl}}/api/auth/admin-login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "options": {"raw": {"language": "json"}}
+        }
+      }
+    },
+    {
+      "name": "3. 包装库存（page=1,pageSize=20）",
+      "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/inventory/packaging?page=1&pageSize=20"}
+    }
+  ]
+}

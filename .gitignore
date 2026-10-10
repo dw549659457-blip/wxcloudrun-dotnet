@@ -35,6 +35,7 @@ Dockerfile.*
 .env.*
 !.env.example
 !.env.cloudrun.example
+!.env.cloudrun-test.example
 TestResults/
 *.sql.gz
 *.xlsx

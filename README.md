@@ -45,7 +45,7 @@ docker compose up -d mysql
 ./scripts/dev.ps1 run
 ```
 
-`migrate` 输出有序迁移名称，`seed` 输出 6 个开发账号准备完成但不输出密码，`run` 启动 API。另开终端执行 `dotnet test tests/Business.Tests.csproj` 和 `dotnet build aspnetapp.sln -c Release`。测试要求本机 `127.0.0.1:3306` 的独立 MySQL 管理账号可创建/删除测试库，默认自动测试使用当前云开发机的本地无密码 root 隔离实例；其他本机环境通过 TEST_MYSQL_PORT、TEST_MYSQL_USER、TEST_MYSQL_PASSWORD 配置测试专用管理账号，只允许 127.0.0.1。不要指向生产数据库、不要把真实值写入测试源码。
+`migrate` 输出有序迁移名称，`seed` 输出 6 个开发账号准备完成但不输出密码，`run` 启动 API。另开终端执行 `dotnet test tests/Business.Tests.csproj` 和 `dotnet build aspnetapp.sln -c Release`。测试默认使用当前开发机 `127.0.0.1:3306` 的隔离 MySQL 管理账号，通过 TEST_MYSQL_PORT、TEST_MYSQL_USER、TEST_MYSQL_PASSWORD 配置。用户明确授权远程测试时，可另外指定 TEST_MYSQL_HOST 并开启 TEST_MYSQL_ALLOW_REMOTE=true；测试仍只创建/删除 vegetable_test_ 随机隔离库，不接受外部指定的测试库名。不要把真实值写入测试源码。临时公网库配置和验证命令见 [docs/cloud-database-verification.md](docs/cloud-database-verification.md)。
 
 ## 3. 主要能力
 

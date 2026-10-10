@@ -76,7 +76,8 @@ public sealed record AppSettings(string ConnectionString, int Port, bool Product
             ConnectionTimeout = 10,
             DefaultCommandTimeout = 30,
             AllowUserVariables = true,
-            SslMode = Enum.Parse<MySqlSslMode>(Read("MYSQL_SSL_MODE") ?? "Preferred", true)
+            SslMode = Enum.Parse<MySqlSslMode>(Read("MYSQL_SSL_MODE") ?? "Preferred", true),
+            SslCa = Read("MYSQL_SSL_CA_FILE") ?? ""
         };
         var timezone = Read("BUSINESS_TIME_ZONE") ?? "Asia/Shanghai";
         TimeZoneInfo.FindSystemTimeZoneById(timezone);

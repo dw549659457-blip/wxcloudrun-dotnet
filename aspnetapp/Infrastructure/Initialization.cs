@@ -1,11 +1,52 @@
 using aspnetapp.Configuration;
 using aspnetapp.Domain;
 using aspnetapp.Services;
+using MySqlConnector;
+using System.Text.RegularExpressions;
 
 namespace aspnetapp.Infrastructure;
 
 public sealed class Initialization(Database database, AppSettings settings)
 {
+    public async Task InspectDatabase()
+    {
+        var builder = new MySqlConnectionStringBuilder(settings.ConnectionString);
+        var target = builder.Database;
+        builder.Database = "";
+        await using var connection = new MySqlConnection(builder.ConnectionString);
+        await connection.OpenAsync();
+        var server = (await Database.Query(connection, null, "SELECT VERSION() AS Version, @@sql_mode AS SqlMode"))[0];
+        var tls = await Database.Query(connection, null, "SHOW SESSION STATUS LIKE 'Ssl_cipher'");
+        var exists = (await Database.Query(connection, null, "SELECT COUNT(*) AS Total FROM information_schema.SCHEMATA WHERE SCHEMA_NAME=@name", ("name", target)))[0].Id("Total") != 0;
+        var tables = await Database.Query(connection, null, "SELECT TABLE_NAME AS Name FROM information_schema.TABLES WHERE TABLE_SCHEMA=@name ORDER BY TABLE_NAME", ("name", target));
+        // 不输出连接字符串、凭据、账号表或业务行数据。
+        Console.WriteLine(JsonSettings.Serialize(new
+        {
+            host = builder.Server, port = builder.Port, database = target,
+            version = server.Text("Version"), sqlMode = server.Text("SqlMode"),
+            tlsCipher = tls.Count == 0 ? "" : tls[0].Text("Value"),
+            databaseExists = exists, tables = tables.Select(row => row.Text("Name")).ToArray()
+        }));
+    }
+
+    public async Task CreateDatabase()
+    {
+        var builder = new MySqlConnectionStringBuilder(settings.ConnectionString);
+        var target = builder.Database;
+        // 数据库标识符不能参数化：只允许普通独立业务库名，排除系统库和原示例库。
+        if (!Regex.IsMatch(target, @"\A[A-Za-z][A-Za-z0-9_]{0,63}\z")
+            || new[] { "mysql", "sys", "information_schema", "performance_schema", "aspnet_demo" }.Contains(target, StringComparer.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("请使用独立业务数据库名，不操作系统库或原示例库");
+        }
+
+        builder.Database = "";
+        await using var connection = new MySqlConnection(builder.ConnectionString);
+        await connection.OpenAsync();
+        await Database.Execute(connection, null, $"CREATE DATABASE IF NOT EXISTS `{target}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        Console.WriteLine($"业务库已准备：{target}；已有数据库和业务数据未覆盖");
+    }
+
     public async Task Admin()
     {
         var username = Environment.GetEnvironmentVariable("INITIAL_ADMIN_USERNAME") ?? throw new InvalidOperationException("缺少 INITIAL_ADMIN_USERNAME");

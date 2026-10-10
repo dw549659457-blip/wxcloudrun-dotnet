@@ -11,6 +11,30 @@ public sealed class AdditionalTests(TestFixture fixture) : IClassFixture<TestFix
 {
     private static readonly DateOnly Day = new(2026, 10, 2);
     [Fact]
+    public async Task Database_preparation_preserves_existing_accounts_and_migrations_when_repeated()
+    {
+        var settings = aspnetapp.Configuration.AppSettings.Load();
+        var initialization = new aspnetapp.Infrastructure.Initialization(fixture.Database, settings);
+        await using var connection = await fixture.Database.Open();
+        var before = (await aspnetapp.Infrastructure.Database.Query(connection, null, "SELECT COUNT(*) AS Total FROM Users"))[0].Id("Total");
+        await initialization.CreateDatabase();
+        await initialization.CreateDatabase();
+        var after = (await aspnetapp.Infrastructure.Database.Query(connection, null, "SELECT COUNT(*) AS Total FROM Users"))[0].Id("Total");
+        Assert.Equal(before, after);
+        Assert.Equal(4, (await aspnetapp.Infrastructure.Database.Query(connection, null, "SELECT COUNT(*) AS Total FROM SchemaMigrations"))[0].Id("Total"));
+    }
+    [Fact]
+    public async Task Database_preparation_rejects_system_example_and_unsafe_names_before_any_database_write()
+    {
+        var settings = aspnetapp.Configuration.AppSettings.Load();
+        foreach (var name in new[] { "mysql", "sys", "information_schema", "performance_schema", "aspnet_demo", "bad-name", "bad`name", "bad\nname" })
+        {
+            var connection = new MySqlConnector.MySqlConnectionStringBuilder(settings.ConnectionString) { Database = name };
+            var invalid = settings with { ConnectionString = connection.ConnectionString };
+            await Assert.ThrowsAsync<InvalidOperationException>(() => new aspnetapp.Infrastructure.Initialization(fixture.Database, invalid).CreateDatabase());
+        }
+    }
+    [Fact]
     public async Task Every_report_has_real_rows_or_empty_results_and_exports_all_filtered_pages()
     {
         var (_, vegetable) = await fixture.Stock(0, 30);

@@ -71,6 +71,8 @@ if (command is not null)
 {
     switch (command)
     {
+        case "inspect-db": await app.Services.GetRequiredService<Initialization>().InspectDatabase(); break;
+        case "create-database": await app.Services.GetRequiredService<Initialization>().CreateDatabase(); break;
         case "migrate": await app.Services.GetRequiredService<MigrationRunner>().Run(); break;
         case "seed": await app.Services.GetRequiredService<Initialization>().Seed(); break;
         case "init-admin": await app.Services.GetRequiredService<Initialization>().Admin(); break;

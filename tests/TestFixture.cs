@@ -29,13 +29,22 @@ public sealed class TestFixture : IAsyncLifetime
     public long Customer { get; private set; }
     public async Task InitializeAsync()
     {
+        var testHost = Environment.GetEnvironmentVariable("TEST_MYSQL_HOST") ?? "127.0.0.1";
+        var remote = testHost != "127.0.0.1" && testHost != "localhost" && testHost != "::1";
+        if (remote && Environment.GetEnvironmentVariable("TEST_MYSQL_ALLOW_REMOTE") != "true")
+        {
+            throw new InvalidOperationException("远程测试需显式 TEST_MYSQL_ALLOW_REMOTE=true；测试仅创建/删除 vegetable_test_ 随机隔离库");
+        }
+
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
         Environment.SetEnvironmentVariable("DEV_LOGIN_ENABLED", "true");
         Environment.SetEnvironmentVariable("MYSQL_DATABASE", DatabaseName);
-        Environment.SetEnvironmentVariable("MYSQL_HOST", "127.0.0.1");
+        Environment.SetEnvironmentVariable("MYSQL_HOST", testHost);
         Environment.SetEnvironmentVariable("MYSQL_PORT", Environment.GetEnvironmentVariable("TEST_MYSQL_PORT") ?? "3306");
         Environment.SetEnvironmentVariable("MYSQL_USER", Environment.GetEnvironmentVariable("TEST_MYSQL_USER") ?? "root");
         Environment.SetEnvironmentVariable("MYSQL_PASSWORD", Environment.GetEnvironmentVariable("TEST_MYSQL_PASSWORD") ?? "");
+        Environment.SetEnvironmentVariable("MYSQL_SSL_MODE", Environment.GetEnvironmentVariable("TEST_MYSQL_SSL_MODE") ?? (remote ? "Required" : "Preferred"));
+        Environment.SetEnvironmentVariable("MYSQL_SSL_CA_FILE", Environment.GetEnvironmentVariable("TEST_MYSQL_SSL_CA_FILE") ?? "");
         Environment.SetEnvironmentVariable("MYSQL_ADDRESS", null);
         Environment.SetEnvironmentVariable("MYSQL_USERNAME", null);
         Environment.SetEnvironmentVariable("APP_COMMAND", null);
@@ -79,10 +88,18 @@ public sealed class TestFixture : IAsyncLifetime
             client.Dispose();
         }
 
-        await Factory.DisposeAsync();
+        if (Factory is not null)
+        {
+            await Factory.DisposeAsync();
+        }
         MySqlConnection.ClearAllPools();
+        if (serverConnection.Length == 0)
+        {
+            return;
+        }
+
         await using var server = new MySqlConnection(serverConnection); await server.OpenAsync();
-        await aspnetapp.Infrastructure.Database.Execute(server, null, $"DROP DATABASE `{DatabaseName}`");
+        await aspnetapp.Infrastructure.Database.Execute(server, null, $"DROP DATABASE IF EXISTS `{DatabaseName}`");
     }
     public static async Task<HttpResponseMessage> Send(HttpClient client, HttpMethod method, string path, object? input = null, string? key = null)
     {
