@@ -21,6 +21,9 @@ export function isApiFailure(value: unknown): value is ApiFailure {
 export function friendlyError(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) {
+      if (['INVALID_CREDENTIALS', 'ACCOUNT_DISABLED'].includes(error.failure.code)) {
+        return error.message;
+      }
       return '登录已过期，请重新进入；未提交的内容还在';
     }
     if (error.failure.code === 'CSRF_REJECTED') {

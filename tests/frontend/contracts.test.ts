@@ -4,6 +4,7 @@ import {
   addQuantities,
   compareQuantities,
   confirmSubmission,
+  friendlyError,
   makeTicket,
   percentage,
   quantityError,
@@ -24,6 +25,19 @@ const archive: Archive = {
   enabled: true,
 };
 const result: SubmissionResult = { id: 1, number: 'STOCK-1', status: 'POSTED', version: 2 };
+describe('登录错误提示', () => {
+  it.each([
+    ['INVALID_CREDENTIALS', '账号或密码不正确，或账号已停用'],
+    ['ACCOUNT_DISABLED', '账号已停用'],
+  ])('保留 %s 的原因，不误报会话过期', (code, message) => {
+    expect(friendlyError(new ApiError(401, { code, message }))).toBe(message);
+  });
+  it('真正的会话过期仍提示重新登录并保留未提交内容', () => {
+    expect(
+      friendlyError(new ApiError(401, { code: 'SESSION_EXPIRED', message: '登录已过期' })),
+    ).toBe('登录已过期，请重新进入；未提交的内容还在');
+  });
+});
 describe('数量与单位', () => {
   it('公斤小数精确相加，避免浮点尾数', () => {
     expect(addQuantities('0.1', '0.2')).toBe('0.3');
