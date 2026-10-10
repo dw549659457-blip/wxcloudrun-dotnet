@@ -1,0 +1,182 @@
+<view class="page"
+  ><view class="title">{{stepTitle}}</view
+  ><view class="subtitle">记空包装回收量，以及实际收到仓的蔬菜量。</view>
+  <view wx:if="{{error}}" class="error"
+    >{{error}}<button wx:if="{{locked && !pending}}" bindtap="retryLoad">
+      重新加载并核实
+    </button></view
+  ><view wx:if="{{notice}}" class="notice">{{notice}}</view>
+  <view wx:if="{{loading}}" class="notice">正在核实任务与品类…</view>
+  <view wx:if="{{pending}}" class="warning"
+    >这笔还没有确认是否记好。请保留原提交，联网后继续确认。<button
+      class="primary"
+      bindtap="submit"
+      disabled="{{saving}}"
+      loading="{{saving}}"
+    >
+      继续确认原提交
+    </button></view
+  >
+  <view class="field"
+    ><text class="field-label">业务日期</text
+    ><picker
+      mode="date"
+      value="{{document.businessDate}}"
+      start="2000-01-01"
+      end="2100-12-31"
+      data-field="businessDate"
+      bindchange="field"
+      disabled="{{locked || confirming}}"
+      ><view class="picker">{{document.businessDate}}</view></picker
+    ></view
+  >
+
+  <view class="card"
+    ><view class="caption">先核对棚户与任务</view
+    ><view class="card-title">{{batchLabel || '还没选择棚户任务'}}</view
+    ><button bindtap="chooseBatch" disabled="{{locked || confirming}}">
+      {{batch ? '换一个棚户任务' : '选择棚户任务'}}</button
+    ><view wx:for="{{batch.packaging}}" wx:key="itemId" class="summary-line"
+      >{{item.name}}：尚在外 {{item.outstanding}} {{item.unit}}</view
+    ></view
+  >
+  <view class="section-title">这户是否已经收完？</view
+  ><view class="actions"
+    ><button
+      class="{{document.mode === 'PARTIAL' ? 'selected' : ''}}"
+      data-mode="PARTIAL"
+      bindtap="chooseMode"
+      disabled="{{locked || confirming}}"
+    >
+      这户还没收完（任务继续）</button
+    ><button
+      class="{{document.mode === 'FINAL' ? 'selected' : ''}}"
+      data-mode="FINAL"
+      bindtap="chooseMode"
+      disabled="{{locked || confirming}}"
+    >
+      这户已经收完（结束任务）
+    </button></view
+  >
+  <view class="section-title">本次空包装回收</view
+  ><view class="caption">没有回收的品类留空。数量填本次，勿填累计。</view
+  ><quantity-row
+    wx:for="{{document.items}}"
+    wx:key="index"
+    options="{{packaging}}"
+    value="{{item}}"
+    index="{{index}}"
+    disabled="{{locked || confirming || !batch}}"
+    bindchange="lineChange"
+    bindremove="removeLine"
+  /><button bindtap="addLine" disabled="{{locked || confirming}}">再加一种包装</button>
+  <view class="section-title">本次实收到仓的蔬菜</view
+  ><quantity-row
+    wx:for="{{document.vegetables}}"
+    wx:key="index"
+    options="{{vegetables}}"
+    value="{{item}}"
+    index="{{index}}"
+    data-section="vegetables"
+    disabled="{{locked || confirming || !batch}}"
+    bindchange="lineChange"
+    bindremove="removeLine"
+  /><button data-section="vegetables" bindtap="addLine" disabled="{{locked || confirming}}">
+    添加实收蔬菜
+  </button>
+  <view class="field" wx:if="{{document.mode === 'FINAL'}}"
+    ><view class="field-label">有包装损耗？请选择原因</view
+    ><view class="row-actions"
+      ><button data-reason="损坏" bindtap="chooseLoss" disabled="{{locked || confirming}}">
+        损坏</button
+      ><button data-reason="遗失" bindtap="chooseLoss" disabled="{{locked || confirming}}">
+        遗失</button
+      ><button data-reason="其他" bindtap="chooseLoss" disabled="{{locked || confirming}}">
+        其他
+      </button></view
+    ><textarea
+      value="{{document.lossReason}}"
+      data-field="lossReason"
+      bindinput="field"
+      disabled="{{locked || confirming}}"
+      maxlength="500"
+      placeholder="存在损耗时必须填写原因"
+      cursor-spacing="100"
+    />
+  </view>
+  <view class="field"
+    ><text class="field-label">蔬菜差异原因</text
+    ><textarea
+      value="{{document.differenceReason}}"
+      data-field="differenceReason"
+      bindinput="field"
+      disabled="{{locked || confirming}}"
+      maxlength="500"
+      placeholder="装菜产出与实收不一致时填写"
+      cursor-spacing="100"
+    />
+  </view>
+  <view wx:if="{{lossRows.length && !confirming}}"
+    ><summary-panel title="请核对损耗并补充原因" rows="{{lossRows}}" /></view
+  ><view wx:if="{{differenceRows.length && !confirming}}"
+    ><summary-panel title="请核对差异并补充原因" rows="{{differenceRows}}"
+  /></view>
+
+  <button
+    class="link-button"
+    bindtap="toggleRemark"
+    wx:if="{{resource !== 'outbounds' || document.mode !== 'DIRECT'}}"
+  >
+    {{showRemark ? '收起备注' : '需要备注？点这里'}}
+  </button>
+  <view
+    class="field"
+    wx:if="{{showRemark || (resource === 'outbounds' && document.mode === 'DIRECT')}}"
+    ><text class="field-label"
+      >{{resource === 'outbounds' && document.mode === 'DIRECT' ? '手工出库来源（必填）' :
+      '备注（选填）'}}</text
+    ><textarea
+      value="{{document.remark}}"
+      data-field="remark"
+      bindinput="field"
+      disabled="{{locked || confirming}}"
+      maxlength="500"
+      placeholder="填写来源或需要说明的情况"
+      cursor-spacing="100"
+    />
+  </view>
+  <view id="confirmation" wx:if="{{confirming}}"
+    ><summary-panel rows="{{summary}}" /><summary-panel
+      wx:if="{{lossRows.length}}"
+      title="本次包装对账"
+      rows="{{lossRows}}"
+    /><summary-panel
+      wx:if="{{differenceRows.length}}"
+      title="蔬菜产出与实收差异"
+      rows="{{differenceRows}}"
+    /><view class="warning" wx:if="{{resource === 'recoveries' && document.mode === 'FINAL'}}"
+      >确认后，这户任务结束，未收回的包装记为损耗。请逐项核对。</view
+    ><view class="actions"
+      ><button
+        class="primary"
+        bindtap="submit"
+        loading="{{saving}}"
+        disabled="{{saving || pending}}"
+      >
+        {{resource === 'recoveries' && document.mode === 'FINAL' ? '确认收完，记账并结束这户' :
+        '确认记账'}}</button
+      ><button bindtap="backToEdit" disabled="{{saving || locked}}">返回修改</button></view
+    ></view
+  >
+  <view class="bottom-actions actions" wx:if="{{!confirming && !pending}}"
+    ><button
+      class="primary"
+      bindtap="preview"
+      disabled="{{loading || saving || locked}}"
+      loading="{{saving}}"
+    >
+      {{saving ? '正在核对，请稍等' : '下一步，核对本次记录'}}</button
+    ><button bindtap="saveLater" disabled="{{loading}}">先保存，稍后记</button
+    ><button bindtap="discard" disabled="{{loading || saving}}">放弃本机草稿</button></view
+  >
+</view>

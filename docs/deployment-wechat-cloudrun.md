@@ -10,7 +10,7 @@
 
 ## 二、核对并复用已有托管 MySQL
 
-在已关联实例核实内网地址、端口、实际版本/SQL mode、TLS及备份。本地验证是 MySQL8.0.45，不等于云实例已验证。优先在同实例创建独立业务库，例如vegetable_business；不要默认为aspnet_demo，不重复开通同类资源、不把MySQL装到应用镜像。
+在已关联实例核实内网地址、端口、实际版本/SQL mode、TLS及备份。本地验证是 MySQL8.0.45，不等于云实例已验证。优先在同实例创建独立业务库，vegetable_prod；不要默认为aspnet_demo，不重复开通同类资源、不把MySQL装到应用镜像。
 
 由有权限的操作者创建业务账号时，只允许该库SELECT/INSERT/UPDATE/DELETE；DDL迁移用受控账号。本次按用户指定复用托管root，需显式设置MYSQL_ALLOW_ROOT=true；默认仍拒绝生产运行root。已知内网地址为10.40.100.75:3306，新业务库为vegetable_prod，导入步骤参见[database-deploy.md](database-deploy.md)。
 
@@ -47,13 +47,15 @@
 ## 四、编译、发布与检查
 
 ```sh
+pnpm install --frozen-lockfile
+pnpm check
 dotnet restore aspnetapp.sln --locked-mode
 dotnet test tests/Business.Tests.csproj
 dotnet build aspnetapp.sln -c Release --no-restore
 docker build -t vegetable-api .
 ```
 
-Docker为多阶段，固定SDK10.0.401和ASP.NET运行时10.0.12；运行时只包含发布输出，保留原模板默认运行用户和80端口，不带数据库、测试或本地环境文件。镜像拉取必须允许mcr.microsoft.com及其官方下载重定向域名；当前开发环境centralus.data.mcr.microsoft.com受限导致403，已记录到环境草稿。不得用不可信镜像或跳过TLS代替。
+Docker新增Node24.19.0/pnpm11.25.0管理前端构建阶段，npm锁定安装并复制打包结果；.NET阶段固定SDK10.0.401和ASP.NET运行时10.0.12；运行时只包含 .NET 发布输出与 `/admin/` 静态资源，保留原模板默认运行用户和80端口，不带数据库、测试或本地环境文件。镜像拉取必须允许mcr.microsoft.com及其官方下载重定向域名；当前开发环境centralus.data.mcr.microsoft.com受限导致403，已记录到环境草稿。不得用不可信镜像或跳过TLS代替。
 
 代码就绪并按用户授权推送到已关联main分支后，云托管按根目录Dockerfile构建新版本。保留原版本可回退。健康检查先核对端口，再配置/health/live和/health/ready（平台若只支持单一路径，按其能力选择）。最小/最大副本在控制台设置；连接配额约束为“最大副本数×MYSQL_POOL_LIMIT+迁移/运维连接”，实际额度以实例为准。例如原模板max5、pool10意味着至少考虑50个应用连接，不能默认数据库允许。
 
@@ -62,8 +64,8 @@ Docker为多阶段，固定SDK10.0.401和ASP.NET运行时10.0.12；运行时只�
 ## 五、入口和微信上线验证
 
 - 从控制台复制实际HTTPS地址；不能从任务书截图猜测环境ID/域名，不能硬编码特定后缀。服务名按实际X-WX-SERVICE值，环境ID按复制的callContainer片段。
-- 小程序先初始化wx.cloud，再callContainer调用/api/...；wx.login code由后端验证。手机号code与登录code分开。使用平台默认域名与callContainer不等于小程序备案和审核已完成。
-- 浏览器访问所需公网入口仍要开启，所有数据和导出需认证。此交付暂未提供Web管理页面，/admin/是JSON404；前端接入后再测试HTML、JS/CSS、SPA刷新、Cookie、CSRF、API与Excel下载。
+- 小程序先初始化wx.cloud，再callContainer调用/api/...；wx.login code由后端验证。手机号code与登录code分开。原生项目位于 `apps/miniprogram`，配置后编译导入步骤见 [frontend-setup.md](frontend-setup.md)。使用平台默认域名与callContainer不等于小程序备案和审核已完成。
+- 浏览器访问所需公网入口仍要开启，所有数据和导出需认证。管理入口为实际HTTPS域名的 `/admin/`。本地真实浏览器已验证资源、SPA刷新、Cookie/CSRF、API与Excel；用户实际云端仍需按 [frontend-setup.md](frontend-setup.md) 验证。
 - 默认域名网页/下载能力和条款以实际微信云托管控制台为准，本地无法证实。不绕过限制；若平台明确要求自定义域名，按地域/备案规则配置获准域名，不以“内部使用”推断免备案。
 - 微信线上code2Session、手机号资格、真实callContainer、小程序真机需用户实际账号联调。没有真实凭证时本地假微信适配器只用于测试，不可在生产注册。
 - 发布后用健康检查和只读接口验证，**不要**反复调用旧/api/count或生产出库/清零接口检测上线。

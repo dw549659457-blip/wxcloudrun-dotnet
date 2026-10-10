@@ -1,8 +1,8 @@
 # 实施决策
 
-- 用户明确要求继续使用现有 .NET 模板开发 C#，因此任务书里的 Node.js、TypeScript、pnpm、Zod、Vitest 等专属配置替换为 ASP.NET Core、C# DTO/运行时校验、NuGet 锁文件、xUnit。没有交付第二套后端。
+- 用户明确要求继续使用现有 .NET 模板开发 C#，因此任务书里的 Node.js 后端替换为 ASP.NET Core、C# DTO/运行时校验、NuGet 锁文件、xUnit；前端保留 TypeScript、pnpm、Vitest。没有交付第二套后端。
 - .NET 6 已结束支持，采用 Microsoft 官方源提供的 .NET 10 LTS；SDK 10.0.401，运行时 10.0.12，锁定依赖。需跟踪官方安全修补。
-- 本次范围为后端；小程序页面与 Web 管理界面未实现。需求附件中的完整前端执行指令不是本次交付完成的依据。
+- 用户继续要求开发任务书其余部分，新增 React/Ant Design Web 管理端与原生微信 TypeScript 小程序，使用 pnpm 工作区和共享契约。管理端由原 .NET 镜像同源分发，不增加第二套业务后端。
 - 使用既有 aspnetapp 项目与当前隔离检出，不创建 worktree。模板端口80与 MYSQL_ADDRESS/MYSQL_USERNAME/MYSQL_PASSWORD 保持兼容，明确额外 MYSQL_DATABASE。
 - 多种业务单据共用 Documents 头表，通过 Kind 与运行时验证分开；DocumentItems 保存真实关系、正数量和档案快照；批次、两类余额、流水、身份、会话、审计和幂等使用独立关系表/外键。
 - 单企业单仓库使用持久 StockTransactionGate 行锁，所有库存写事务先锁该行，然后锁余额。跨副本并发串行，保证顺序一致；没有进程内 Map/锁。仅短事务，锁内不调用微信/生成 Excel；若未来写入吞吐量显著增加再评估细粒度锁。

@@ -1,0 +1,32 @@
+{
+  "name": "vegetable-warehouse",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.19.0 <25"
+  },
+  "scripts": {
+    "dev:admin": "pnpm --filter @warehouse/admin dev",
+    "build": "pnpm build:admin && pnpm --filter @warehouse/miniprogram build",
+    "build:admin": "pnpm --filter @warehouse/admin build && node scripts/frontend/copy-admin.mjs",
+    "build:miniprogram": "pnpm --filter @warehouse/miniprogram build",
+    "typecheck": "pnpm -r typecheck && tsc --noEmit -p tsconfig.frontend-tests.json",
+    "lint": "eslint apps packages scripts/frontend tests/frontend playwright.config.ts vitest.config.ts --max-warnings 0",
+    "format": "prettier --write apps packages scripts/frontend",
+    "test": "vitest run",
+    "test:e2e": "pnpm build:miniprogram:verify && playwright test",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "build:miniprogram:verify": "node scripts/frontend/build-miniprogram.mjs --verification"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@types/node": "24.19.2",
+    "eslint": "10.12.0",
+    "mysql2": "3.24.5",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.1",
+    "vitest": "5.0.3"
+  },
+  "type": "module"
+}

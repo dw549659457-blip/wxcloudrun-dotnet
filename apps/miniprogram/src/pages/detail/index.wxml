@@ -1,0 +1,53 @@
+<view class="page"
+  ><view class="title"
+    >{{success && detail.document.status === 'POSTED' ? '✓ 已记好' : title + '详情'}}</view
+  ><view wx:if="{{success && detail.document.status === 'POSTED'}}" class="notice"
+    >后台已确认成功，下面是本次正式单据。</view
+  ><view wx:if="{{loading}}" class="notice">正在核实记录…</view
+  ><view wx:if="{{error}}" class="error"
+    >{{error}}<button bindtap="load" disabled="{{busy}}">重新加载记录</button></view
+  ><view wx:if="{{notice}}" class="warning">{{notice}}</view
+  ><view wx:if="{{detail}}"
+    ><view class="card"
+      ><view class="card-title">{{detail.document.input.businessDate}} · {{statusText}}</view
+      ><view class="record-number">单据号：{{detail.document.number}}</view
+      ><view>记录人：{{creator}}</view><view>创建：{{created}}</view><view>提交：{{posted}}</view
+      ><view wx:if="{{detail.context.growerName}}">棚户：{{detail.context.growerName}}</view
+      ><view wx:if="{{detail.document.customerName}}">客户：{{detail.document.customerName}}</view
+      ><view>{{modeText}}</view
+      ><view wx:if="{{detail.document.input.remark}}"
+        >备注：{{detail.document.input.remark}}</view
+      ></view
+    ><view class="card"
+      ><view class="card-title">本次数量</view
+      ><view wx:for="{{lines}}" wx:key="key" class="summary-line"
+        >{{item.label}}<view class="quantity">{{item.quantity}} {{item.unit}}</view
+        ><view wx:if="{{detail.document.input.mode === 'DIRECT'}}"
+          >报表展示：{{item.display}} {{item.unit}}</view
+        ></view
+      ><view wx:if="{{!lines.length}}">本次没有新增数量明细。</view></view
+    ><view
+      class="card"
+      wx:if="{{detail.document.input.lossReason || detail.document.input.differenceReason}}"
+      ><view>包装损耗原因：{{detail.document.input.lossReason || '无'}}</view
+      ><view>蔬菜差异原因：{{detail.document.input.differenceReason || '无'}}</view></view
+    ><view class="actions" wx:if="{{detail.document.status === 'DRAFT'}}"
+      ><button class="primary" bindtap="post" disabled="{{busy}}" loading="{{busy}}">
+        {{pending ? '继续确认原提交' : '确认这份草稿记账'}}</button
+      ><button bindtap="edit" disabled="{{busy || pending}}">修改草稿</button
+      ><button class="danger" bindtap="deleteDraft" disabled="{{busy || pending}}">
+        删除未记账草稿
+      </button></view
+    ><view class="notice" wx:if="{{detail.document.status === 'POSTED'}}"
+      >如数量有误，请把单据号交给管理员修正。</view
+    ><view class="actions"
+      ><button
+        class="primary"
+        bindtap="again"
+        wx:if="{{success && detail.document.status === 'POSTED'}}"
+      >
+        再记一笔（清空数量）</button
+      ><button bindtap="home">回到首页</button></view
+    ></view
+  ></view
+>

@@ -1,0 +1,123 @@
+<view class="page"
+  ><view class="title">{{stepTitle}}</view
+  ><view class="subtitle">按棚户分组，填写这次送出的包装量。</view>
+  <view wx:if="{{error}}" class="error"
+    >{{error}}<button wx:if="{{locked && !pending}}" bindtap="retryLoad">
+      重新加载并核实
+    </button></view
+  ><view wx:if="{{notice}}" class="notice">{{notice}}</view>
+  <view wx:if="{{loading}}" class="notice">正在核实任务与品类…</view>
+  <view wx:if="{{pending}}" class="warning"
+    >这笔还没有确认是否记好。请保留原提交，联网后继续确认。<button
+      class="primary"
+      bindtap="submit"
+      disabled="{{saving}}"
+      loading="{{saving}}"
+    >
+      继续确认原提交
+    </button></view
+  >
+  <view class="field"
+    ><text class="field-label">业务日期</text
+    ><picker
+      mode="date"
+      value="{{document.businessDate}}"
+      start="2000-01-01"
+      end="2100-12-31"
+      data-field="businessDate"
+      bindchange="field"
+      disabled="{{locked || confirming}}"
+      ><view class="picker">{{document.businessDate}}</view></picker
+    ></view
+  >
+
+  <view wx:for="{{groups}}" wx:key="key" wx:for-item="group" wx:for-index="groupIndex" class="card"
+    ><view class="card-title">第 {{groupIndex + 1}} 户</view
+    ><picker
+      range="{{growers}}"
+      range-key="name"
+      data-group="{{groupIndex}}"
+      bindchange="chooseGrower"
+      disabled="{{locked || confirming}}"
+      ><view class="picker">{{group.growerName}}</view></picker
+    ><quantity-row
+      wx:for="{{group.lines}}"
+      wx:key="index"
+      options="{{packaging}}"
+      value="{{item}}"
+      index="{{index}}"
+      data-group="{{groupIndex}}"
+      disabled="{{locked || confirming}}"
+      bindchange="lineChange"
+      bindremove="removeLine"
+    /><button data-group="{{groupIndex}}" bindtap="addLine" disabled="{{locked || confirming}}">
+      这户再加一种包装</button
+    ><button
+      class="danger link-button"
+      data-group="{{groupIndex}}"
+      bindtap="removeGrower"
+      disabled="{{locked || confirming}}"
+    >
+      删除这户
+    </button></view
+  >
+  <button bindtap="addGrower" disabled="{{locked || confirming}}">＋ 再加一户</button>
+
+  <button
+    class="link-button"
+    bindtap="toggleRemark"
+    wx:if="{{resource !== 'outbounds' || document.mode !== 'DIRECT'}}"
+  >
+    {{showRemark ? '收起备注' : '需要备注？点这里'}}
+  </button>
+  <view
+    class="field"
+    wx:if="{{showRemark || (resource === 'outbounds' && document.mode === 'DIRECT')}}"
+    ><text class="field-label"
+      >{{resource === 'outbounds' && document.mode === 'DIRECT' ? '手工出库来源（必填）' :
+      '备注（选填）'}}</text
+    ><textarea
+      value="{{document.remark}}"
+      data-field="remark"
+      bindinput="field"
+      disabled="{{locked || confirming}}"
+      maxlength="500"
+      placeholder="填写来源或需要说明的情况"
+      cursor-spacing="100"
+    />
+  </view>
+  <view id="confirmation" wx:if="{{confirming}}"
+    ><summary-panel rows="{{summary}}" /><summary-panel
+      wx:if="{{lossRows.length}}"
+      title="本次包装对账"
+      rows="{{lossRows}}"
+    /><summary-panel
+      wx:if="{{differenceRows.length}}"
+      title="蔬菜产出与实收差异"
+      rows="{{differenceRows}}"
+    /><view class="warning" wx:if="{{resource === 'recoveries' && document.mode === 'FINAL'}}"
+      >确认后，这户任务结束，未收回的包装记为损耗。请逐项核对。</view
+    ><view class="actions"
+      ><button
+        class="primary"
+        bindtap="submit"
+        loading="{{saving}}"
+        disabled="{{saving || pending}}"
+      >
+        {{resource === 'recoveries' && document.mode === 'FINAL' ? '确认收完，记账并结束这户' :
+        '确认记账'}}</button
+      ><button bindtap="backToEdit" disabled="{{saving || locked}}">返回修改</button></view
+    ></view
+  >
+  <view class="bottom-actions actions" wx:if="{{!confirming && !pending}}"
+    ><button
+      class="primary"
+      bindtap="preview"
+      disabled="{{loading || saving || locked}}"
+      loading="{{saving}}"
+    >
+      {{saving ? '正在核对，请稍等' : '下一步，核对本次记录'}}</button
+    ><button bindtap="saveLater" disabled="{{loading}}">先保存，稍后记</button
+    ><button bindtap="discard" disabled="{{loading || saving}}">放弃本机草稿</button></view
+  >
+</view>

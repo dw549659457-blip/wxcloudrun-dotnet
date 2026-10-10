@@ -93,3 +93,9 @@ Excel MIME为application/vnd.openxmlformats-officedocument.spreadsheetml.sheet�
 `GET /health/live` 进程存活，`GET /health/ready` MySQL连通（失败503），`GET /health`兼容健康入口，`/`只给服务状态。未知API返回JSON404，不被SPA吞掉。
 
 错误：`{"code":"INSUFFICIENT_STOCK","message":"库存不足，整单未入账","details":{...},"requestId":"..."}`。401未登录/失效；403无权限/CSRF；404不暴露他人对象；400输入或单位校验；409版本/幂等冲突/库存不足/关闭/依赖；429登录限频；503临时不可用或结果未知；504超时待确认。日志仅请求ID、路径、状态、耗时及异常类型，不记录密码、令牌、手机号或微信请求URL。
+
+## 前端响应契约补充
+
+单据列表/详情的 document 增加 creatorName、createdAt、postedAt 和 customerName；前两者是记录人名称快照与UTC创建时间，postedAt未提交时为null。详情 context 给出所属批次棚户/司机名称，DocumentItems包含棚户快照。员工自己的已关闭作业详情仍可查看必要名称，不因此授予全局批次余额权限。客户和单位使用后台原有快照。
+
+Web页面由 `/admin/` 提供，只有该前缀使用SPA fallback；未知 `/api/...` 保持JSON404。构建资源见 frontend-setup.md。共享前端类型在 `packages/contracts/src/types.ts`，数量字符串与实际/展示数量仍采用原 API 口径。

@@ -51,8 +51,10 @@ public sealed class QueryRepository(Database database, AppSettings settings)
             throw new BusinessException(404, "NOT_FOUND", "未找到单据");
         }
 
-        var items = await Database.Query(connection, null, "SELECT i.*,i.Quantity AS ActualQuantity,CASE WHEN JSON_UNQUOTE(JSON_EXTRACT(d.Payload,'$.mode'))='DIRECT' AND d.Kind='OUTBOUND' THEN -i.Quantity ELSE i.Quantity END AS DisplayQuantity FROM DocumentItems i JOIN Documents d ON d.Id=i.DocumentId WHERE DocumentId=@id ORDER BY i.Id", ("id", id));
-        return new { document, items = items.Select(row => row.Output()) };
+        var items = await Database.Query(connection, null, "SELECT i.*,b.GrowerName,i.Quantity AS ActualQuantity,CASE WHEN JSON_UNQUOTE(JSON_EXTRACT(d.Payload,'$.mode'))='DIRECT' AND d.Kind='OUTBOUND' THEN -i.Quantity ELSE i.Quantity END AS DisplayQuantity FROM DocumentItems i JOIN Documents d ON d.Id=i.DocumentId LEFT JOIN WorkBatches b ON b.Id=i.BatchId WHERE DocumentId=@id ORDER BY i.Id", ("id", id));
+        var context = document.Input.BatchId is null ? null : (await Database.Query(connection, null,
+            "SELECT b.GrowerName,u.Name AS DriverName FROM WorkBatches b JOIN Users u ON u.Id=b.DriverId WHERE b.Id=@batch", ("batch", document.Input.BatchId))).FirstOrDefault()?.Output();
+        return new { document, items = items.Select(row => row.Output()), context };
     }
     public async Task<object> Inventory(Actor actor, bool packaging, PageQuery query)
     {

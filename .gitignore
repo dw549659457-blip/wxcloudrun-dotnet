@@ -40,3 +40,12 @@ TestResults/
 *.sql.gz
 *.xlsx
 .local/
+node_modules/
+apps/admin/dist/
+apps/miniprogram/miniprogram/
+apps/miniprogram/src/config/local.ts
+apps/miniprogram/project.private.config.json
+playwright-report/
+test-results/
+*.tsbuildinfo
+aspnetapp/wwwroot/admin/

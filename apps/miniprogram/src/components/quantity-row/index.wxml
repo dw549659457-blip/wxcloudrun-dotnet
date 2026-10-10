@@ -1,0 +1,43 @@
+<view class="quantity-card">
+  <view class="type-choices" wx:if="{{options.length <= 4}}"
+    ><button
+      wx:for="{{options}}"
+      wx:key="id"
+      class="{{value.itemId === item.id ? 'selected-type' : ''}}"
+      data-id="{{item.id}}"
+      bindtap="chooseItem"
+      disabled="{{disabled}}"
+    >
+      {{item.name}}（{{item.unit}}）{{value.itemId === item.id ? ' · 已选' : ''}}
+    </button></view
+  >
+  <picker
+    wx:if="{{options.length > 4}}"
+    range="{{options}}"
+    range-key="name"
+    disabled="{{disabled}}"
+    bindchange="choose"
+    ><view class="choice"
+      >{{selectedName || '点这里选择品类'}}
+      <text class="unit" wx:if="{{selectedUnit}}">（{{selectedUnit}}）</text></view
+    ></picker
+  >
+  <view class="quantity-controls"
+    ><button aria-label="数量减一" data-delta="-1" bindtap="step" disabled="{{disabled}}">－</button
+    ><input
+      aria-label="本次数量"
+      type="{{inputType}}"
+      value="{{value.quantity}}"
+      placeholder="填本次数量"
+      maxlength="19"
+      disabled="{{disabled}}"
+      bindinput="quantity"
+      adjust-position="true"
+      cursor-spacing="100"
+    /><text class="unit">{{selectedUnit}}</text
+    ><button aria-label="数量加一" data-delta="1" bindtap="step" disabled="{{disabled}}">
+      ＋
+    </button></view
+  >
+  <button class="remove" bindtap="remove" disabled="{{disabled}}">删除这一行</button>
+</view>

@@ -1,0 +1,4 @@
+.record-number {
+  overflow-wrap: anywhere;
+  font-size: 18px;
+}

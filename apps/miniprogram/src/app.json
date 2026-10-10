@@ -1,0 +1,26 @@
+{
+  "pages": [
+    "pages/start/index",
+    "pages/home/index",
+    "pages/batches/index",
+    "pages/dispatch/index",
+    "pages/work/index",
+    "pages/recovery/index",
+    "pages/outbound/index",
+    "pages/inventory/index",
+    "pages/records/index",
+    "pages/detail/index",
+    "pages/profile/index",
+    "pages/help/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "包装与蔬菜",
+    "navigationBarBackgroundColor": "#176747",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f3f6f2",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

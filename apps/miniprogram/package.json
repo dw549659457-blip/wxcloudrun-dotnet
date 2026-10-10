@@ -1,0 +1,15 @@
+{
+  "name": "@warehouse/miniprogram",
+  "private": true,
+  "scripts": {
+    "build": "node ../../scripts/frontend/build-miniprogram.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@warehouse/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "miniprogram-api-typings": "5.2.3"
+  }
+}

@@ -12,3 +12,13 @@ attachments
 **/*.pfx
 **/*.key
 **/*.sql.gz
+
+**/node_modules
+**/dist
+apps/miniprogram/miniprogram
+apps/miniprogram/src/config/local.ts
+apps/miniprogram/project.private.config.json
+playwright-report
+test-results
+aspnetapp/wwwroot/admin
+artifacts

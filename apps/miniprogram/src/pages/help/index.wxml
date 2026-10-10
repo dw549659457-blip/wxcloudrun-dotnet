@@ -1,0 +1,38 @@
+<view class="page"
+  ><view class="title">{{roleName}}操作图解</view>
+  <view class="card" wx:if="{{role === 'DRIVER'}}"
+    ><view class="card-title">① 派发包装</view
+    ><view>选棚户姓名 → 选包装类型 → 填本次数量。送多户，点“再加一户”。</view
+    ><view class="section-title">② 回收登记</view
+    ><view>选棚户任务 → 填空包装回收量和实收到仓的蔬菜量。</view
+    ><view class="section-title">③ 核对是否收完</view
+    ><view
+      >还要再去：选“这户还没收完”。不再去：选“这户已经收完”，核对损耗和差异，填写原因。</view
+    ></view
+  >
+  <view class="card" wx:if="{{role === 'WORKER'}}"
+    ><view class="card-title">① 先选棚户</view
+    ><view>从所有还没收完的任务中选正确姓名，核对派发日期和司机。</view
+    ><view class="section-title">② 记本次装菜</view
+    ><view>填消耗的包装量，再填装好的蔬菜数量。这里只显示已派发的包装。</view
+    ><view class="section-title">③ 核对后确认</view
+    ><view>检查棚户、包装、蔬菜和单位 → 点“确认记账”。装菜产出还不是仓库库存。</view></view
+  >
+  <view class="card" wx:if="{{role === 'OUTBOUND'}}"
+    ><view class="card-title">① 选择方式与客户</view
+    ><view>正常出库，或手工出库。手工出库必须说明来源。</view
+    ><view class="section-title">② 填实际数量</view
+    ><view>选蔬菜，填本次实际出库正数。两种方式都会扣库存；手工出库在报表显示负数。</view
+    ><view class="section-title">③ 核对后确认</view
+    ><view>检查客户、日期、品类和数量 → 点“确认记账”。</view></view
+  >
+  <view class="card"
+    ><view class="card-title">提交后怎么确认？</view
+    ><view
+      >看见“已记好”和单据号，才算成功。提示“还没确认结果”时，点“继续确认原提交”，不要新开一笔。</view
+    ><view class="section-title">网络不好怎么办？</view
+    ><view>点“先保存，稍后记”，内容保存在本机。联网后继续填写；草稿尚未记账。</view
+    ><view class="section-title">已提交数量填错？</view
+    ><view>请管理员按单据号冲销或更正。不要另记一张相反单据。</view></view
+  ><button class="primary" bindtap="home">回到首页</button></view
+>

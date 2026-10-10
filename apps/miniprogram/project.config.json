@@ -1,0 +1,9 @@
+{
+  "description": "包装流转与蔬菜出入库微信原生小程序",
+  "miniprogramRoot": "miniprogram/",
+  "compileType": "miniprogram",
+  "appid": "touristappid",
+  "projectname": "vegetable-warehouse",
+  "setting": { "es6": true, "minified": true, "urlCheck": true },
+  "libVersion": "3.10.3"
+}

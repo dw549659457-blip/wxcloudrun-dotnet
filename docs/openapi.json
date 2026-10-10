@@ -96,10 +96,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -133,10 +133,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -232,10 +232,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -269,10 +269,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -368,10 +368,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -405,10 +405,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -504,10 +504,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -541,10 +541,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -591,10 +591,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -641,10 +641,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -691,10 +691,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -741,12 +741,24 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
+      }
+    },
+    "/admin": {
+      "get": {
+        "tags": [
+          "aspnetapp"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/health/live": {
@@ -1106,10 +1118,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -1187,10 +1199,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -1237,10 +1249,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -1287,10 +1299,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -1307,10 +1319,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -1346,10 +1358,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -1366,10 +1378,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -1482,10 +1494,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -1536,10 +1548,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -1652,10 +1664,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -1706,10 +1718,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -1822,10 +1834,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -1876,10 +1888,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -1992,10 +2004,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2046,10 +2058,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -2162,10 +2174,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2216,10 +2228,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -2247,10 +2259,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2320,10 +2332,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2349,10 +2361,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -2380,10 +2392,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2453,10 +2465,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2482,10 +2494,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -2513,10 +2525,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2586,10 +2598,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2615,10 +2627,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -2646,10 +2658,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2719,10 +2731,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2748,10 +2760,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -2779,10 +2791,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2852,10 +2864,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -2881,10 +2893,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -2948,10 +2960,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3015,10 +3027,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3082,10 +3094,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3149,10 +3161,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3216,10 +3228,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3236,10 +3248,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3335,10 +3347,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3366,10 +3378,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3465,10 +3477,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3564,10 +3576,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3600,10 +3612,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3699,10 +3711,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3806,10 +3818,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3913,10 +3925,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -3933,10 +3945,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -4008,10 +4020,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -4083,10 +4095,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -4182,10 +4194,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       },
@@ -4219,10 +4231,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -4269,10 +4281,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "AdminCookie": [ ]
+            "AdminCookie": []
           }
         ]
       }
@@ -4475,6 +4487,24 @@
           "replacesId": {
             "type": "integer",
             "format": "int64",
+            "nullable": true
+          },
+          "creatorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "postedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "customerName": {
+            "type": "string",
             "nullable": true
           },
           "displayItems": {

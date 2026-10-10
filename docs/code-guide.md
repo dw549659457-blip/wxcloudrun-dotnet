@@ -26,3 +26,25 @@ remark已实现。检查DocumentInput.Remark（最多500字）；DocumentService
 用返回requestId定位标准输出的路径/状态/耗时；VALIDATION_FAILED检查字符串数量/单位/日期；VERSION_CONFLICT刷新草稿；INSUFFICIENT_STOCK查当前实际库存；BATCH_CLOSED重新选择开放批次；DEPENDENCY_BLOCKS_REVERSAL先按details单号逆序处理。超时显示待确认，查询submissions/status或原key重试，不能换key。
 
 读写数据库异常检查/health/ready、配置名冲突、专用账号权限；勿把连接字符串和秘密复制到日志或聊天。`APP_COMMAND=reconcile`只检测不修复，发现差异保留证据后由管理员受控排查。
+
+## 从小程序表单到同一后台
+
+小程序 `src/app.ts` 恢复员工会话与初始化云环境；`pages/start` 处理微信进入、手机号与本人确认，`services/session.ts` 处理失效恢复与账号草稿隔离。`services/api.ts` 只选择 callContainer 或显式本地 wx.request，不接受客户端自报 openid/角色。
+
+`pages/work/index.wxml` 是原生装菜表单，`index.ts` 调用 `services/document-page.ts` 的普通页面方法；派发/装菜/回收/出库复用校验、保存、确认按钮与请求，不引入表单框架。输入组件 `components/quantity-row` 给出大字品类、单位和本次数量。`preview` 重新核实身份、档案、批次和余额；`submit` 经 `services/forms.ts` 保存原 key/body 再调用 `packages/contracts/src/submission.ts`。成功跳到 `pages/detail`，后端才是最终库存依据。
+
+共享 `types.ts` 定义现有 API 形状，`quantity.ts` 用 decimal.js 计算与校验，`validation.ts` 给出中文字段提示。前端不会把业务量转换为浮点 Number，也不会把“装菜产出”当作仓库入库。
+
+## 从管理页面到同一后台
+
+`apps/admin/src/App.tsx` 管理路由和角色入口，页面在 `pages/`。`api/client.ts` 统一同源 Cookie 请求与 CSRF，不存管理员令牌。`DocumentEditor` 填写业务，`DocumentSummary` 展示核对内容，`hooks/useSubmission.ts` 存储原提交并防双击/恢复结果。
+
+`pages/DocumentsPage.tsx` 使用同一后台完成草稿编辑、提交、冲销与原子重建；依赖单号链接可直接定位详情。`pages/ReportsPage.tsx` 将界面同一筛选对象用于列表和完整 Excel 导出。`pages/BindingsPage.tsx` 在管理员线下核实后调用批准/拒绝，不能代替员工本人确认。
+
+修改出库备注的完整路径：小程序 `pages/outbound/index.wxml` 的 remark → `document-page.ts` 收集 DocumentInput → `forms.ts`/共享 submission → `/api/outbounds` → C# DocumentInput/DocumentService → Documents.Payload → ReportRepository → ExcelService；管理端对应 DocumentEditor/DocumentSummary。加字段时同时更新共享类型、两端表单、C#运行时校验、OpenAPI和必要的业务测试。
+
+## 构建与测试位置
+
+`pnpm build:admin` → Vite dist → `scripts/frontend/copy-admin.mjs` → `aspnetapp/wwwroot/admin` → dotnet publish或Docker。`pnpm build:miniprogram` → esbuild原生页面JS + WXML/WXSS/JSON复制 → 开发者工具。Docker只发布管理端，不上传微信小程序。
+
+`tests/frontend/contracts.test.ts`/`miniprogram.test.ts` 用Vitest检验边界；`tests/frontend/e2e` 用Playwright浏览器和原生控制器访问真实API/MySQL。`scripts/frontend/e2e-server.mjs` 只建/删随机本机测试库。测试文件采用中文场景名和实际数量断言；`out/mini-verification` 是独立本地验证适配包，禁止生产发布。

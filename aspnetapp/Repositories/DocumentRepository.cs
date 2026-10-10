@@ -16,7 +16,7 @@ public sealed class DocumentRepository
 
         return Read(rows[0]);
     }
-    public static DocumentRecord Read(Row row) => new(row.Id("Id"), row.Text("Number"), row.Text("Kind"), row.Id("CreatorId"), row.Text("Status"), (int)row.Id("Version"), JsonSettings.Deserialize<DocumentInput>(row.Text("Payload")), row.IsNull("ReplacesId") ? null : row.Id("ReplacesId"));
+    public static DocumentRecord Read(Row row) => new(row.Id("Id"), row.Text("Number"), row.Text("Kind"), row.Id("CreatorId"), row.Text("Status"), (int)row.Id("Version"), JsonSettings.Deserialize<DocumentInput>(row.Text("Payload")), row.IsNull("ReplacesId") ? null : row.Id("ReplacesId"), row.Text("CreatorName"), DateTime.SpecifyKind(row.DateTime("CreatedAt"), DateTimeKind.Utc), row.IsNull("PostedAt") ? null : DateTime.SpecifyKind(row.DateTime("PostedAt"), DateTimeKind.Utc), row.IsNull("CustomerName") ? null : row.Text("CustomerName"));
     public async Task<DocumentRecord> Create(MySqlConnection connection, MySqlTransaction transaction, string kind, long creatorId, DocumentInput input, long? replacesId = null)
     {
         var number = $"{kind}-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";

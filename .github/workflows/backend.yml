@@ -1,4 +1,4 @@
-name: CSharp backend validation
+name: CSharp and frontend validation
 on:
   push:
   pull_request:
@@ -11,8 +11,8 @@ jobs:
       mysql:
         image: mysql:8.0.45
         env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-          MYSQL_ROOT_HOST: "%"
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_ROOT_HOST: '%'
         ports:
           - 3306:3306
         options: >-
@@ -25,7 +25,26 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.401
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.19.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
       - run: python3 scripts/generate-cloudrun-sql.py --check
       - run: dotnet restore aspnetapp.sln --locked-mode
       - run: dotnet test tests/Business.Tests.csproj --no-restore --logger 'console;verbosity=minimal'
       - run: dotnet publish aspnetapp -c Release --no-restore -o out/api /p:UseAppHost=false
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-verification
+          path: |
+            artifacts/frontend/*.png
+            test-results/**
+          retention-days: 7

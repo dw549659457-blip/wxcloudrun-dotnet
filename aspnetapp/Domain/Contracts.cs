@@ -52,7 +52,7 @@ public sealed record PostInput(int Version);
 public sealed record ReverseInput(string Reason);
 public sealed record CorrectInput(string Reason, DocumentInput Document);
 public sealed record DisplayLine(long ItemId, decimal ActualQuantity, decimal DisplayQuantity);
-public sealed record DocumentRecord(long Id, string Number, string Kind, long CreatorId, string Status, int Version, DocumentInput Input, long? ReplacesId)
+public sealed record DocumentRecord(long Id, string Number, string Kind, long CreatorId, string Status, int Version, DocumentInput Input, long? ReplacesId, string CreatorName = "", DateTime? CreatedAt = null, DateTime? PostedAt = null, string? CustomerName = null)
 {
     // 列表与详情均提供明确的展示量，DIRECT负号绝不影响实际扣库存口径。
     public DisplayLine[] DisplayItems => Input.Items.Select(line => new DisplayLine(

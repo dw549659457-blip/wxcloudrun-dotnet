@@ -1,18 +1,21 @@
-# 包装流转与蔬菜出入库后台（微信云托管 / C#）
+# 包装流转与蔬菜出入库系统（微信云托管 / C#）
 
 本仓库在用户现有 `wxcloudrun-dotnet` 模板中实现业务后台，按用户确认继续使用 **C# + ASP.NET Core**，升级至 **.NET 10 LTS**，使用 MySQL/InnoDB、MySqlConnector 参数化 SQL 和 C# decimal。原云托管 Dockerfile 入口、80 容器端口和 MySQL 配置名保持兼容；原计数器接口已由真实业务接口替代，原库和云服务版本不被修改。
 
-**本次交付范围是后台 API、数据库、测试、Excel、运维命令与部署资料。** 任务书所列微信小程序页面和完整 Web 管理界面需另行接入这些 API；本仓库没有冒充完整前端的演示页面，`/admin/` 当前返回 JSON 404。微信登录适配器已实现，真实微信和用户云托管环境尚未联调。现存模板 Razor 页面/静态素材未挂载到服务路由。
+已提供后台 API、React 管理后台、原生微信小程序、数据库迁移与测试。管理后台构建后由同一 .NET 服务在 `/admin/` 提供；小程序从 `apps/miniprogram` 导入微信开发者工具。前端安装/配置见 [frontend-setup.md](docs/frontend-setup.md)，员工指引见 [employee-quickstart.md](docs/employee-quickstart.md)，管理员图文指引见 [admin-quickstart.md](docs/admin-quickstart.md)。真实微信授权、callContainer 和用户云端域名仍待配置联调。
 
 微信云托管首次建库可直接导入 [database/wechat-cloudrun-init.sql](database/wechat-cloudrun-init.sql)，默认业务库 `vegetable_prod`。当前已按用户指定 `10.40.100.75:3306`、`root` 适配，密码通过服务环境变量注入；完整步骤见 [docs/database-deploy.md](docs/database-deploy.md)。
 
 ## 1. 快速运行
 
-要求：.NET SDK `10.0.401`（global.json 固定）、MySQL 8.0（本地验证版本 8.0.45）、Git。数据库也可使用已安装的本机 MySQL，不强制 Docker。SQL 兼容 5.7 的写法，但实际云端版本、SQL mode、TLS 必须再次核对；本地未验证 MySQL 5.7。
+要求：Node.js 24.19.x、pnpm 11.25.0、.NET SDK `10.0.401`（global.json 固定）、MySQL 8.0（本地验证版本 8.0.45）、Git。数据库也可使用已安装的本机 MySQL，不强制 Docker。SQL 兼容 5.7 的写法，但实际云端版本、SQL mode、TLS 必须再次核对；本地未验证 MySQL 5.7。
 
 在仓库根目录执行：
 
 ```sh
+npm install --global pnpm@11.25.0
+pnpm install --frozen-lockfile
+pnpm build
 dotnet restore aspnetapp.sln --locked-mode
 cp .env.example .env.local
 # 编辑 .env.local，设置实际本地数据库连接、Development、DEV_LOGIN_ENABLED=true
@@ -28,15 +31,20 @@ bash scripts/dev.sh run
 
 开发账号：admin、driver1、driver2、worker1、worker2、outbound1，密码均为你设置的 `DEV_SEED_PASSWORD`。种子不覆盖既有账号密码、不初始化库存，重复运行只补充缺失档案。开发登录使用 `POST /api/auth/dev-login`，登录响应令牌仅作本地验收；`Production`、`Staging` 等非 Development 环境拒绝开发登录开关。
 
+开发管理端用另一个终端运行 `pnpm dev:admin`，访问 `http://localhost:5173/admin/`；默认代理后台8080，使用管理员账号密码登录。`pnpm build:admin` 后，后台地址的 `/admin/` 也可直接访问。小程序先填写真实 AppID 和 `src/config/local.ts` 的 envId，再运行 `pnpm build:miniprogram` 并导入 `apps/miniprogram`。
+
 本地运行端口由 `.env.local` 的 `PORT=8080` 指定。用本地 HTTP 请求检查 `/health/live`、`/health/ready`。开发模式 `/swagger/` 提供 OpenAPI；生产关闭 Swagger，固定接口契约见 [docs/openapi.json](docs/openapi.json) 和 [docs/api.md](docs/api.md)。
 
 ## 2. Windows 初学者步骤
 
-1. 安装 .NET 10 SDK、Git、VS Code；安装 Docker Desktop 或本机 MySQL 8.0。
+1. 安装 .NET 10 SDK、Node.js 24.19.x、Git、VS Code 和微信开发者工具；安装 Docker Desktop 或本机 MySQL 8.0。
 2. VS Code 打开仓库；PowerShell 在仓库根目录执行 `Copy-Item .env.example .env.local`，编辑连接信息与开发开关。
 3. 先创建数据库，再运行以下命令；不使用 Docker 时省略 Compose。
 
 ```powershell
+npm install --global pnpm@11.25.0
+pnpm install --frozen-lockfile
+pnpm build
 dotnet restore aspnetapp.sln --locked-mode
 # $env:MYSQL_LOCAL_ROOT_PASSWORD 和 $env:MYSQL_PASSWORD 由你在本地安全设置
 docker compose up -d mysql
@@ -61,17 +69,25 @@ docker compose up -d mysql
 ## 4. 命令及代码入口
 
 ```sh
+pnpm check
 dotnet restore aspnetapp.sln --locked-mode
 dotnet test tests/Business.Tests.csproj --logger 'console;verbosity=minimal'
 dotnet build aspnetapp.sln -c Release --no-restore
 dotnet publish aspnetapp -c Release -o out/api --no-restore
 bash scripts/dev.sh reconcile
+# 前端端到端：本机 MySQL 随机隔离库；需先发布到 out/api
+pnpm exec playwright install chromium
+pnpm test:e2e
 # 本地镜像构建（需允许微软镜像重定向下载域名）
 docker build -t vegetable-api .
 ```
 
 | 路径 | 职责 |
 |---|---|
+| apps/admin/src | React管理页面、Cookie/CSRF客户端与提交恢复 |
+| apps/miniprogram/src | 原生TS/WXML/WXSS页面、微信绑定、员工角色流程 |
+| packages/contracts/src | 共享API类型、十进制校验、原提交确认 |
+| scripts/frontend | 构建与隔离端到端测试启动 |
 | aspnetapp/Program.cs | DI、路由、请求/健康检查、显式运维命令 |
 | aspnetapp/Controllers | 身份验证、请求入口和响应 |
 | aspnetapp/Services/DocumentService.cs | 库存业务、草稿/提交/冲销/修正 |
@@ -79,6 +95,7 @@ docker build -t vegetable-api .
 | aspnetapp/Repositories | 参数化 SQL、权限筛选、报表与对账 |
 | aspnetapp/Integrations/WechatGateway.cs | 微信身份/手机号/标准令牌适配 |
 | database/migrations | 有序迁移及校验历史 |
+| tests/frontend | Vitest + Playwright + 原生控制器真实API/MySQL测试 |
 | tests | xUnit + ASP.NET 测试宿主 + 真实 MySQL 集成测试 |
 | docs | API、业务口径、配置映射、发布/回滚与验收 |
 
@@ -86,4 +103,4 @@ docker build -t vegetable-api .
 
 ## 5. 验证边界
 
-本地真实 MySQL 测试验证业务规则，不代表微信线上联调成功。镜像构建、生产数据库连接、备份策略、平台默认域名网页限制、Cookie、真实手机 callContainer 等验证状态分别记录在 [验收记录](docs/acceptance.md) 和 [平台核实记录](docs/platform-verification.md)。未自动推送、创建云服务版本或发布生产。
+本地真实 MySQL 测试验证业务规则，不代表微信线上联调成功。镜像构建、生产数据库连接、备份策略、平台默认域名网页限制、Cookie、真实手机 callContainer 等验证状态分别记录在 [验收记录](docs/acceptance.md) 和 [平台核实记录](docs/platform-verification.md)。Git提交及推送main已获授权；云端构建/发布结果需要平台核实，未操作用户控制台创建新服务。

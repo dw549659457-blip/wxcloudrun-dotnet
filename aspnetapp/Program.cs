@@ -7,6 +7,7 @@ using aspnetapp.Repositories;
 using aspnetapp.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.FileProviders;
 using System.Net;
 
 try
@@ -97,6 +98,20 @@ try
         }
 
         app.UseForwardedHeaders(forwarding);
+    }
+    // 管理端只挂在 /admin；API 未找到仍返回 JSON 404，不落入单页应用。
+    var adminDirectory = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "admin");
+    if (Directory.Exists(adminDirectory))
+    {
+        var adminFiles = new PhysicalFileProvider(adminDirectory);
+        app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = adminFiles, RequestPath = "/admin" });
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = adminFiles, RequestPath = "/admin",
+            OnPrepareResponse = context => context.Context.Response.Headers.CacheControl = "no-cache"
+        });
+        app.MapGet("/admin", () => Results.Redirect("/admin/"));
+        app.MapFallbackToFile("/admin/{*path:nonfile}", "index.html", new StaticFileOptions { FileProvider = adminFiles });
     }
     app.UseRouting();
     app.UseRequestTimeouts();

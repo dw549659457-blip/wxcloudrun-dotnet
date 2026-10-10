@@ -1,0 +1,10 @@
+.batch-choice {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-weight: 400;
+  font-size: 18px;
+  padding: 18px;
+  box-sizing: border-box;
+  line-height: 1.7;
+}

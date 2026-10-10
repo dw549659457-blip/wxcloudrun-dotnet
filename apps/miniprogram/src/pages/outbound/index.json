@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "出库登记",
+  "usingComponents": {
+    "quantity-row": "../../components/quantity-row/index",
+    "summary-panel": "../../components/summary-panel/index"
+  }
+}

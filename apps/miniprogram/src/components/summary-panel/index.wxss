@@ -1,0 +1,24 @@
+.summary {
+  margin: 18px 0;
+  padding: 18px;
+  background: #fff;
+  border: 2px solid #176747;
+  border-radius: 14px;
+  font-size: 20px;
+  color: #20382b;
+}
+.heading {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.line {
+  padding: 12px 0;
+  border-top: 1px solid #dce7d6;
+}
+.amount {
+  font-size: 22px;
+  font-weight: 700;
+  color: #176747;
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,8 @@
+packages:
+  - apps/*
+  - packages/*
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@types/node@24.19.2'
+  - prettier@3.9.10

@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "types": ["node", "miniprogram-api-typings"],
+    "allowImportingTsExtensions": true,
+    "typeRoots": ["node_modules/@types", "apps/miniprogram/node_modules"],
+    "paths": {
+      "@warehouse/contracts": ["./packages/contracts/src/index.ts"]
+    }
+  },
+  "include": ["tests/frontend/**/*.ts", "playwright.config.ts", "vitest.config.ts"]
+}

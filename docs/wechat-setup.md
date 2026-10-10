@@ -1,11 +1,13 @@
-# 微信端后续接入
+# 微信小程序接入
 
-本次后台已提供真实微信适配器，小程序页面未包含在本次交付，没有可导入的miniprogram目录。前端实现时使用原生微信小程序，不把网页当作小程序。
+已提供原生 TypeScript 小程序，入口为 `apps/miniprogram/project.config.json`。安装、配置与编译步骤见 [frontend-setup.md](frontend-setup.md)，人工验收见 [miniprogram-verification.md](miniprogram-verification.md)。
 
-从控制台复制实际环境ID和服务名，在小程序初始化wx.cloud。每次调用wx.cloud.callContainer的config.env取实际值，header中X-WX-SERVICE取实际服务名，path以/api/开头；登录流程先wx.login，将code发送auth/wechat-login。
+从本人控制台复制实际环境ID到 `src/config/local.ts` 的 envId，服务名暂设 `dotnet-4jwm`；开发者工具填写真实 AppID。`wx.cloud.init` 和每次 callContainer 的 `config.env` 使用该值，header `X-WX-SERVICE` 指向实际服务，path 以 `/api/` 开头。默认配置的环境ID为空，会明确提示配置缺失，不猜测环境或假登录。
 
-服务端WECHAT_APP_ID/WECHAT_APP_SECRET只在后台环境变量中，员工不会手填openid或角色。手机号按钮由本人点击获取独立phoneCode，走bind-phone->身份摘要->confirm-binding；没有接口资格或拒绝授权走binding-requests->管理员线下核实批准->本人confirm-binding。
+服务端 `WECHAT_APP_ID/WECHAT_APP_SECRET` 只在后端环境变量中。wx.login code 发给 wechat-login；手机号授权 code 独立发给 bind-phone。员工本人点击授权，核对姓名角色后 confirm-binding 才正式绑定。不收集头像、昵称或无关个人信息，也不允许员工自己手填 openid/角色/手机号认领。
 
-开发验收使用DEV_LOGIN_ENABLED，仅Development；FakeWechat仅由tests宿主替换DI，生产未注册mock。线上身份头不被信任。会话失败先wx.login恢复绑定身份，无需重复手机号授权。多角色select-role只接受数据库已分配值。
+拒绝授权或接口资格缺失时，可以申请管理员协助：员工提交 binding-requests，管理员在 `/admin/bindings` 线下核实后批准，员工检查状态并本人确认。账号原先绑定其他微信时不自动覆盖；管理员解除后旧会话失效，重新由本人确认。
 
-前端对库存提交生成并保留Idempotency-Key，超时查询当前用户submissions/status；成功清理草稿，PENDING沿用原key，FAILED根据中文错误修改后再提交。前端草稿按用户隔离，不保存登录/手机号授权code或密码。对老人使用大字、56px按钮、无注册表和清晰本次口径；真机和现场试用尚未执行。
+会话恢复先核实 auth/me，过期时 wx.login 验证已绑定微信恢复，不重复索取手机号。多角色由后端校验并记住上次身份，首页和个人页可切换。业务请求带后端员工 token，后台永远按数据库角色与记录归属限制访问。
+
+开发模式需 `mode: 'local'`、`developmentLogin: true`，并且服务端 Development + DEV_LOGIN_ENABLED=true。生产误开后端开发登录会拒绝启动。真实生产依赖微信资格、凭证与环境关联；本地接口替身不能替代真实微信验收。
