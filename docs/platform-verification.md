@@ -8,6 +8,7 @@
 | MySQL变量及端口 | 模板源码解析MYSQL_ADDRESS/USERNAME/PASSWORD，初始化80端口 | 已检查；云实际设置待核对 |
 | 官方.NET LTS SDK | Microsoft releases元数据，SDK10.0.401/运行时10.0.12 | 已安装/构建 |
 | 微信登录/手机号接口 | 真实HTTPS适配器已实现；测试替换独立FakeWechat | 真实线上待联调 |
+| 小程序到云托管实际通道 | 用户开发者工具返回callContainer的503，业务code WECHAT_NOT_CONFIGURED，请求ID cb2252fbb8f249378d85954d67258d72 | 路由已到达C#服务；后台微信凭证缺少至少一项，微信换取身份/手机号仍未通过 |
 | 微信托管令牌 | 本版使用标准stable_token，未知模式启动拒绝 | 平台模式未验证 |
 | 默认域名网页/下载限制 | 未访问用户实际地址；没有当前控制台限制证据 | 待用户实测，不能保证不限用途 |
 | 小程序环境ID/服务名/备案/手机号资格 | 工程已预填用户提供的AppID wx336b5ac8bed80159、envId prod-d7glkv54o7189eae7，服务名dotnet-4jwm | 实际关联权限、备案/手机号资格仍待微信平台确认 |

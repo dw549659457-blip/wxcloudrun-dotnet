@@ -28,6 +28,21 @@
 
 本工程已进行静态检查、原生页面控制器检查及隔离 MySQL 的实际业务链路测试。尚未运行真实微信开发者工具或真机授权、渲染测试，具体人工步骤见 `微信验收清单.md`。
 
+### 登录提示“微信登录暂未配置”
+
+后台返回 `503 / WECHAT_NOT_CONFIGURED` 表示 `WECHAT_APP_ID`、`WECHAT_APP_SECRET` 至少一项为空；这个响应证明云托管路由已到达 C# 服务。
+
+打开微信云托管控制台 → 服务 `dotnet-4jwm` → 环境变量（服务设置或版本配置中），添加：
+
+| 变量 | 值 |
+|---|---|
+| `WECHAT_APP_ID` | `wx336b5ac8bed80159` |
+| `WECHAT_APP_SECRET` | 此小程序的 AppSecret，只填云控制台 |
+
+AppSecret 在小程序管理平台“开发管理 → 开发设置”中管理。保存后重新部署或重启服务；后台在启动时读取环境变量。重新点“开始使用”，未绑定员工应进入本人手机号核实页。仅修改电脑上的 `.env.cloudrun.example` 或小程序配置文件不会设置服务器环境变量。
+
+新版工程将微信配置错误直接显示为“微信登录暂未配置，请联系管理员”；Console 中 `[warehouse] 接口请求失败` 只记录 method、path、status、code、requestId 或数值 cloudErrorCode，不记录登录凭证、请求体或令牌。业务记账结果不明时仍保留原提交确认流程。
+
 ## 工程结构与源码
 
 `project.config.json` 是导入入口；`miniprogram/` 是完整可编辑、可上传的原生工程；`miniprogram/config/runtime.js` 是唯一运行配置；另附员工指引及验收清单。

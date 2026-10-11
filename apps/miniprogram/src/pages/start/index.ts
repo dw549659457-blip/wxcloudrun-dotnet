@@ -1,5 +1,4 @@
 import {
-  friendlyError,
   roleLabels,
   type Candidate,
   type BindingStatus,
@@ -9,6 +8,7 @@ import { api } from '../../services/api';
 import { settings } from '../../config/settings';
 import { appState, type InputEvent, type PhoneEvent } from '../../types';
 import { requireSession, saveSession, startWechatLogin } from '../../services/session';
+import { loginError } from '../../services/login-errors';
 function candidateText(candidate: Candidate): string {
   return `${candidate.name} · ${candidate.roles.map((role) => roleLabels[role]).join('、')}`;
 }
@@ -33,7 +33,7 @@ Page({
             wx.reLaunch({ url: '/pages/home/index' });
           }
         })
-        .catch((failure: unknown) => this.setData({ error: friendlyError(failure) }));
+        .catch((failure: unknown) => this.setData({ error: loginError(failure) }));
     } else if (appState().globalData.bindingToken) {
       this.setData({ stage: 'PHONE' });
     }
@@ -54,7 +54,7 @@ Page({
         this.setData({ stage: 'PHONE' });
       }
     } catch (failure) {
-      this.setData({ error: friendlyError(failure) });
+      this.setData({ error: loginError(failure) });
     } finally {
       this.setData({ loading: false });
     }
@@ -80,7 +80,7 @@ Page({
       const candidate = result.candidate ?? (result as BindingStatus & Candidate);
       this.setData({ stage: 'CONFIRM', candidate: candidateText(candidate) });
     } catch (failure) {
-      this.setData({ error: friendlyError(failure), assistance: true, stage: 'ASSIST' });
+      this.setData({ error: loginError(failure), assistance: true, stage: 'ASSIST' });
     } finally {
       this.setData({ loading: false });
     }
@@ -97,7 +97,7 @@ Page({
       saveSession(session);
       wx.reLaunch({ url: '/pages/home/index' });
     } catch (failure) {
-      this.setData({ error: friendlyError(failure) });
+      this.setData({ error: loginError(failure) });
     } finally {
       this.setData({ loading: false });
     }
@@ -131,7 +131,7 @@ Page({
         notice: '已申请，请告诉管理员您的姓名。管理员核实后，点下面按钮查看结果。',
       });
     } catch (failure) {
-      this.setData({ error: friendlyError(failure) });
+      this.setData({ error: loginError(failure) });
     } finally {
       this.setData({ loading: false });
     }
@@ -161,7 +161,7 @@ Page({
         });
       }
     } catch (failure) {
-      this.setData({ error: friendlyError(failure) });
+      this.setData({ error: loginError(failure) });
     } finally {
       this.setData({ loading: false });
     }
@@ -198,7 +198,7 @@ Page({
       saveSession(session);
       wx.reLaunch({ url: '/pages/home/index' });
     } catch (failure) {
-      this.setData({ error: friendlyError(failure) });
+      this.setData({ error: loginError(failure) });
     } finally {
       this.setData({ loading: false });
     }

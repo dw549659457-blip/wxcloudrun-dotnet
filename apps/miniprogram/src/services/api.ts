@@ -5,9 +5,47 @@ import {
   type ApiTransport,
   type PageResult,
   type RequestMethod,
+  type ApiFailure,
 } from '@warehouse/contracts';
 import { settings } from '../config/settings';
 import { appState } from '../types';
+function requestError(
+  method: RequestMethod,
+  path: string,
+  status: number,
+  failure: ApiFailure,
+): ApiError {
+  // 只记录定位字段，不记录请求体、登录code、手机号、会话令牌、原始异常对象。
+  const requestId =
+    failure.requestId && /^[a-f0-9-]{16,64}$/i.test(failure.requestId)
+      ? failure.requestId
+      : undefined;
+  const cloudErrorCode =
+    typeof failure.details === 'number' && Number.isSafeInteger(failure.details)
+      ? failure.details
+      : undefined;
+  console.warn('[warehouse] 接口请求失败', {
+    method,
+    path: path.split('?')[0],
+    status,
+    code: /^[A-Z_]{1,80}$/.test(failure.code) ? failure.code : 'REQUEST_FAILED',
+    requestId,
+    cloudErrorCode,
+  });
+  return new ApiError(status, failure);
+}
+function sdkErrorCode(failure: unknown): number | undefined {
+  if (
+    typeof failure === 'object' &&
+    failure !== null &&
+    'errCode' in failure &&
+    typeof failure.errCode === 'number' &&
+    Number.isSafeInteger(failure.errCode)
+  ) {
+    return failure.errCode;
+  }
+  return undefined;
+}
 export const api: ApiTransport = {
   async request<T>(
     method: RequestMethod,
@@ -57,25 +95,31 @@ export const api: ApiTransport = {
         raw = response.data;
       }
     } catch (failure) {
-      if (
-        failure instanceof ApiError ||
-        (failure instanceof Error && failure.message.startsWith('请管理员'))
-      ) {
+      if (failure instanceof Error && failure.message.startsWith('请管理员')) {
         throw failure;
       }
-      throw new ApiError(0, { code: 'NETWORK_ERROR', message: '网络没有连上，请稍后再试' });
+      if (failure instanceof ApiError) {
+        throw requestError(method, path, failure.status, failure.failure);
+      }
+      throw requestError(method, path, 0, {
+        code: 'NETWORK_ERROR',
+        message: '网络没有连上，请稍后再试',
+        details: sdkErrorCode(failure),
+      });
     }
     let data: unknown;
     try {
       data = typeof raw === 'string' && raw ? JSON.parse(raw) : raw;
     } catch {
-      throw new ApiError(502, {
+      throw requestError(method, path, 502, {
         code: 'INVALID_RESPONSE',
         message: '暂时没有确认结果，请检查网络后查询原提交',
       });
     }
     if (status < 200 || status >= 300) {
-      throw new ApiError(
+      throw requestError(
+        method,
+        path,
         status,
         isApiFailure(data) ? data : { code: 'REQUEST_FAILED', message: '暂时没能完成，请稍后重试' },
       );

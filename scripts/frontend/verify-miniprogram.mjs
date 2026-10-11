@@ -187,7 +187,13 @@ export async function verifyCloudSmoke(result) {
   assert(page.data.error.includes('验证账号已停用'));
   test.respond({ statusCode: 200, data: '<html>异常响应</html>' });
   await page.begin();
-  assert(page.data.error.includes('没有确认结果'));
+  assert(page.data.error.includes('登录服务返回'));
+  test.respond({
+    statusCode: 503,
+    data: { code: 'WECHAT_NOT_CONFIGURED', message: '微信登录暂未配置，请联系管理员' },
+  });
+  await page.begin();
+  assert.equal(page.data.error, '微信登录暂未配置，请联系管理员');
   const missing = result.runtime({ envId: '' });
   missing.load(`${result.root}/app.js`);
   missing.state.app.onLaunch();
