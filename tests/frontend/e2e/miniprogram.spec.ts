@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { actorRequest, archive, employee } from './helpers';
 import type { DocumentFormState } from '../../../apps/miniprogram/src/services/document-page';
@@ -36,7 +37,8 @@ interface RequestOptions {
   success(response: { statusCode: number; data: unknown }): void;
   fail(): void;
 }
-// 原生 Page 的控制器和 wx.request 适配器调用真实 C# + MySQL；微信设备和手机号授权另需真实环境验收。
+// 实际发布 cloud 包的 callContainer 用替身转接真实 C# + MySQL。
+// 微信网关、设备渲染和手机号授权另需真实环境验收。
 class NativeRuntime {
   storage = new Map<string, unknown>();
   session: EmployeeSession | null = null;
@@ -45,6 +47,28 @@ class NativeRuntime {
   dropNextOutboundResponse = false;
   dropStatus = false;
   wx = {
+    cloud: {
+      callContainer: (options: {
+        config: { env: string };
+        path: string;
+        method: string;
+        header: Record<string, string>;
+        data?: string;
+      }) => {
+        expect(options.config.env).toBe('e2e-cloud-route-not-real');
+        expect(options.header['X-WX-SERVICE']).toBe('dotnet-4jwm');
+        return new Promise((resolve, reject) => {
+          this.transport({
+            url: `http://127.0.0.1:8182${options.path}`,
+            method: options.method,
+            header: options.header,
+            data: options.data,
+            success: resolve,
+            fail: () => reject(new Error('模拟云通道断网')),
+          });
+        });
+      },
+    },
     getStorageInfoSync: () => ({ keys: [...this.storage.keys()] }),
     getStorageSync: (key: string) => this.storage.get(key),
     setStorageSync: (key: string, value: unknown) => this.storage.set(key, value),
@@ -58,39 +82,42 @@ class NativeRuntime {
     navigateTo: (options: { url: string }) => this.redirects.push(options.url),
     redirectTo: (options: { url: string }) => this.redirects.push(options.url),
     reLaunch: (options: { url: string }) => this.redirects.push(options.url),
-    request: (options: RequestOptions) => {
-      void (async () => {
-        try {
-          const path = new URL(options.url).pathname;
-          if (path === '/api/submissions/status' && this.dropStatus) {
-            options.fail();
-            return;
-          }
-          if (path === '/api/outbounds' && options.method === 'POST') {
-            this.keys.push(options.header['Idempotency-Key']);
-          }
-          const response = await fetch(options.url, {
-            method: options.method,
-            headers: options.header,
-            body: options.data,
-          });
-          const text = await response.text();
-          if (
-            path === '/api/outbounds' &&
-            options.method === 'POST' &&
-            this.dropNextOutboundResponse
-          ) {
-            this.dropNextOutboundResponse = false;
-            options.fail();
-            return;
-          }
-          options.success({ statusCode: response.status, data: text });
-        } catch {
-          options.fail();
-        }
-      })();
+    request: () => {
+      throw new Error('发布包不应通过 wx.request 请求本地后台');
     },
   };
+  transport(options: RequestOptions) {
+    void (async () => {
+      try {
+        const path = new URL(options.url).pathname;
+        if (path === '/api/submissions/status' && this.dropStatus) {
+          options.fail();
+          return;
+        }
+        if (path === '/api/outbounds' && options.method === 'POST') {
+          this.keys.push(options.header['Idempotency-Key']);
+        }
+        const response = await fetch(options.url, {
+          method: options.method,
+          headers: options.header,
+          body: options.data,
+        });
+        const text = await response.text();
+        if (
+          path === '/api/outbounds' &&
+          options.method === 'POST' &&
+          this.dropNextOutboundResponse
+        ) {
+          this.dropNextOutboundResponse = false;
+          options.fail();
+          return;
+        }
+        options.success({ statusCode: response.status, data: text });
+      } catch {
+        options.fail();
+      }
+    })();
+  }
   async load(
     name: string,
     session: EmployeeSession,
@@ -98,7 +125,7 @@ class NativeRuntime {
   ): Promise<NativePage> {
     this.session = session;
     let captured: unknown;
-    runInNewContext(await readFile(`out/mini-verification/pages/${name}/index.js`, 'utf8'), {
+    const globals = {
       wx: this.wx,
       getApp: () => ({
         globalData: {
@@ -117,7 +144,40 @@ class NativeRuntime {
       console,
       setTimeout,
       clearTimeout,
-    });
+    };
+    const modules = new Map<string, { exports: Record<string, unknown> }>();
+    const root = resolve('apps/miniprogram/miniprogram');
+    function load(path: string): Record<string, unknown> {
+      const cached = modules.get(path);
+      if (cached) {
+        return cached.exports;
+      }
+      const module = { exports: {} as Record<string, unknown> };
+      modules.set(path, module);
+      runInNewContext(readFileSync(path, 'utf8'), {
+        ...globals,
+        module,
+        exports: module.exports,
+        require: (specifier: string) => {
+          expect(specifier.startsWith('.')).toBe(true);
+          const target = resolve(dirname(path), specifier);
+          expect(target.startsWith(`${root}/`)).toBe(true);
+          return load(target.endsWith('.js') ? target : `${target}.js`);
+        },
+      });
+      if (path === `${root}/config/runtime.js`) {
+        const settings = module.exports.settings as {
+          mode: string;
+          envId: string;
+          developmentLogin: boolean;
+        };
+        expect(settings.mode).toBe('cloud');
+        expect(settings.developmentLogin).toBe(false);
+        settings.envId = 'e2e-cloud-route-not-real';
+      }
+      return module.exports;
+    }
+    load(`${root}/pages/${name}/index.js`);
     const page = captured as NativePage;
     page.data = structuredClone(page.data);
     page.setData = (value) => {

@@ -10,11 +10,12 @@
     "build": "pnpm build:admin && pnpm --filter @warehouse/miniprogram build",
     "build:admin": "pnpm --filter @warehouse/admin build && node scripts/frontend/copy-admin.mjs",
     "build:miniprogram": "pnpm --filter @warehouse/miniprogram build",
+    "package:miniprogram": "node scripts/frontend/package-miniprogram.mjs",
     "typecheck": "pnpm -r typecheck && tsc --noEmit -p tsconfig.frontend-tests.json",
     "lint": "eslint apps packages scripts/frontend tests/frontend playwright.config.ts vitest.config.ts --max-warnings 0",
     "format": "prettier --write apps packages scripts/frontend",
     "test": "vitest run",
-    "test:e2e": "pnpm build:miniprogram:verify && playwright test",
+    "test:e2e": "node scripts/frontend/build-miniprogram.mjs --release && playwright test",
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "build:miniprogram:verify": "node scripts/frontend/build-miniprogram.mjs --verification"
   },

@@ -71,6 +71,8 @@ docker compose up -d mysql
 
 ```sh
 pnpm check
+# 生成可直接导入微信开发者工具的小程序工程 ZIP
+pnpm package:miniprogram
 dotnet restore aspnetapp.sln --locked-mode
 dotnet test tests/Business.Tests.csproj --logger 'console;verbosity=minimal'
 dotnet build aspnetapp.sln -c Release --no-restore

@@ -38,10 +38,14 @@ dotnet publish aspnetapp -c Release -o out/api
 
 ## 微信开发者工具导入
 
+**直接导入工程包**：运行 `pnpm package:miniprogram`，取得 `out/miniprogram-delivery/vegetable-miniprogram-import.zip`。解压后在开发者工具导入含 `project.config.json` 的 `vegetable-miniprogram` 目录，填写 AppID 和 `miniprogram/config/runtime.js` 的 envId；不需要安装 Node.js 或“构建 npm”。具体步骤见 [工程包导入说明](miniprogram-import.md)。交付打包固定 cloud 模式并关闭开发登录，不会使用本机 `local.ts`。
+
+以下是源码开发方式：
+
 1. 将 `apps/miniprogram/src/config/settings.ts` 复制为同目录 `local.ts`（已忽略），填写本人的 `envId`。从微信云托管控制台的 **小程序调用示例 `config.env`** 复制实际值，不能用服务名、环境名称或数据库地址替代。服务名暂按用户日志 `dotnet-4jwm`，仍以实际 `X-WX-SERVICE` 值为准。
 2. 正式使用 `mode: 'cloud'`、`developmentLogin: false`。保持 HTTPS 校验开关启用。生产通过 `wx.cloud.callContainer`，不依赖直接请求云托管公网域名。
-3. 在微信开发者工具导入 **仓库的 `apps/miniprogram` 目录**，填写真实小程序 AppID。模板 AppID 为 `touristappid`，仅可查看代码，不能验证真实微信授权。真实 AppID 可在开发者工具本地配置中填写，勿把 AppSecret 放进此目录。
-4. 编译前在仓库根目录执行 `pnpm build:miniprogram`。生成的 `apps/miniprogram/miniprogram` 含 `app.js/app.json`、12 个原生页面的 JS/WXML/WXSS/JSON、2 个原生组件。`project.config.json` 的 `miniprogramRoot` 已指向该目录，无须“构建 npm”。修改源码后重新执行命令，再在开发者工具编译。
+3. 在微信开发者工具导入 **仓库的 `apps/miniprogram` 目录**，使用已预填的 AppID `wx336b5ac8bed80159`。云环境默认 `prod-d7glkv54o7189eae7`，服务名 `dotnet-4jwm`，均由用户提供；更换环境时再调整公开配置，勿把 AppSecret 放进此目录。
+4. 编译前在仓库根目录执行 `pnpm build:miniprogram`。生成的 `apps/miniprogram/miniprogram` 含 `app.js/app.json`、12 个原生页面的 JS/WXML/JSON、共用 app.wxss 和2个原生组件。`project.config.json` 的 `miniprogramRoot` 已指向该目录，无须“构建 npm”。配置集中在 `miniprogram/config/runtime.js`，直接修改此文件后点击编译即可；修改 TS 源码时重新构建，构建将覆盖生成的配置文件。
 5. 小程序与现有云托管环境建立关联；后端控制台设置匹配 AppID 的 `WECHAT_APP_ID`、`WECHAT_APP_SECRET`，管理员先建立员工姓名、唯一手机号与岗位。小程序不填写数据库地址、密码、AppSecret、openid 或角色。
 
 `local.ts` 格式与 `settings.ts` 相同。例如只更改配置值，保留导出结构和 `mode` 的联合类型：
@@ -75,7 +79,7 @@ pnpm test:e2e
 
 端到端测试只连接本机 MySQL，环境变量为 `E2E_MYSQL_HOST/PORT/USER/PASSWORD`（默认 `127.0.0.1:3306`、root、空密码，适用于隔离测试实例）。需要有创建/删除随机测试库的权限；不得填生产连接。测试生成 `vegetable_ui_<随机值>`，用随机密码创建种子，结束删除该库和私有状态文件。不会清空开发库或生产库。Excel 验证还需 Python 3。若系统已安装 Chromium，可设置 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` 指向本机可执行文件，避免重复下载。
 
-CI 将前端校验、构建、37 项 C# 测试和浏览器测试纳入同一工作流。`out/mini-verification` 只是测试原生控制器的本地接口适配包，既不会进入 Docker，也不会替代正式小程序包。
+CI 将前端校验、构建、工程包验证、44 项 C# 测试和浏览器测试纳入同一工作流。`pnpm test:e2e` 先重新构建正式 cloud 包，通过 callContainer 替身转接真实 C# 与 MySQL；会覆盖本机生成的 runtime.js，测试前保留个人配置。`out/mini-verification` 是另行手动生成的本地 wx.request 验证包，既不会进入 Docker，也不会替代正式小程序包。
 
 ## 上线后最小验证
 

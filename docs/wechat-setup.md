@@ -2,7 +2,7 @@
 
 已提供原生 TypeScript 小程序，入口为 `apps/miniprogram/project.config.json`。安装、配置与编译步骤见 [frontend-setup.md](frontend-setup.md)，人工验收见 [miniprogram-verification.md](miniprogram-verification.md)。
 
-从本人控制台复制实际环境ID到 `src/config/local.ts` 的 envId，服务名暂设 `dotnet-4jwm`；开发者工具填写真实 AppID。`wx.cloud.init` 和每次 callContainer 的 `config.env` 使用该值，header `X-WX-SERVICE` 指向实际服务，path 以 `/api/` 开头。默认配置的环境ID为空，会明确提示配置缺失，不猜测环境或假登录。
+已预填用户提供的 AppID `wx336b5ac8bed80159`、环境 ID `prod-d7glkv54o7189eae7`，服务名为 `dotnet-4jwm`。运行 `pnpm package:miniprogram` 生成可直接导入工程，见 [导入说明](miniprogram-import.md)；更换环境时修改编译包 `miniprogram/config/runtime.js` 或源码 `src/config/local.ts`。`wx.cloud.init` 和每次 callContainer 的 `config.env` 使用环境ID，header `X-WX-SERVICE` 指向实际服务，path 以 `/api/` 开头。删除环境ID会明确提示配置缺失，不假登录。
 
 服务端 `WECHAT_APP_ID/WECHAT_APP_SECRET` 只在后端环境变量中。wx.login code 发给 wechat-login；手机号授权 code 独立发给 bind-phone。员工本人点击授权，核对姓名角色后 confirm-binding 才正式绑定。不收集头像、昵称或无关个人信息，也不允许员工自己手填 openid/角色/手机号认领。
 

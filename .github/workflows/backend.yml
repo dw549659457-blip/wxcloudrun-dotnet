@@ -34,6 +34,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
+      - run: pnpm package:miniprogram
       - run: python3 scripts/generate-cloudrun-sql.py --check
       - run: python3 scripts/generate-backoffice-upgrade-sql.py --check
       - run: dotnet restore aspnetapp.sln --locked-mode
@@ -41,6 +42,13 @@ jobs:
       - run: dotnet publish aspnetapp -c Release --no-restore -o out/api /p:UseAppHost=false
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vegetable-miniprogram-import
+          path: |
+            out/miniprogram-delivery/vegetable-miniprogram-import.zip
+            out/miniprogram-delivery/vegetable-miniprogram-import.zip.sha256
+          retention-days: 30
       - uses: actions/upload-artifact@v4
         if: always()
         with:
