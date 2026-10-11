@@ -6,7 +6,7 @@ using MySqlConnector;
 namespace aspnetapp.Services;
 
 /// <summary>业务单据生命周期；库存入账仅发生在 POSTED，草稿不影响任何余额。</summary>
-public sealed class DocumentService(TransactionService transactions, DocumentRepository documents, InventoryRepository inventory)
+public sealed class DocumentService(TransactionService transactions, DocumentRepository documents, InventoryRepository inventory, StockNotificationService notifications)
 {
     public static void Authorize(Actor actor, string kind, string action = "read")
     {
@@ -227,6 +227,7 @@ public sealed class DocumentService(TransactionService transactions, DocumentRep
         }
         await Database.Execute(connection, transaction, "UPDATE Documents SET Status='POSTED',Version=Version+1,PostedAt=UTC_TIMESTAMP(6) WHERE Id=@id", [("id", document.Id)]);
         await documents.Audit(connection, transaction, actor, "POST", document.Kind, document.Id, null, document.Input, "", requestId);
+        await notifications.Capture(connection, transaction, actor, document, "POST");
         return new(document.Id, document.Number, DocumentStatuses.Posted, document.Version + 1);
     }
     private async Task Dispatch(MySqlConnection connection, MySqlTransaction transaction, Actor actor, DocumentRecord document)
@@ -474,5 +475,6 @@ public sealed class DocumentService(TransactionService transactions, DocumentRep
         }
         await Database.Execute(connection, transaction, "UPDATE Documents SET Status='REVERSED',Version=Version+1 WHERE Id=@id", [("id", document.Id)]);
         await documents.Audit(connection, transaction, actor, "REVERSE", document.Kind, document.Id, document.Input, new { status = DocumentStatuses.Reversed }, reason, requestId);
+        await notifications.Capture(connection, transaction, actor, document, "REVERSE");
     }
 }

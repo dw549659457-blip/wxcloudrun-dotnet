@@ -1,15 +1,15 @@
-# 小程序1.1.0工程下载
+# 小程序1.2.0工程下载
 
-[下载1.1.0界面优化试上线版 ZIP](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/vegetable-miniprogram-1.1.0.zip)
+[下载1.2.0管理员动态试上线版 ZIP](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/vegetable-miniprogram-1.2.0.zip)
 
-如果直接链接不能下载，登录有仓库访问权限的GitHub账号，打开本目录的 `vegetable-miniprogram-1.1.0.zip` 文件页面，点击右上角 **Download raw file（下载原始文件）**。不要对Codex的 `/workspace/…` 工作区链接使用浏览器“另存为”。
+如果直接链接不能下载，登录有仓库访问权限的GitHub账号，打开本目录的 `vegetable-miniprogram-1.2.0.zip` 文件页面，点击 **Download raw file（下载原始文件）**。不要对Codex的 `/workspace/…` 工作区链接使用浏览器“另存为”。
 
-解压后，在微信开发者工具导入含 `project.config.json` 和 `miniprogram` 的 **vegetable-miniprogram** 目录。AppID `wx336b5ac8bed80159`、envId `prod-d7glkv54o7189eae7` 和服务名 `dotnet-4jwm` 已填好，不需要安装Node.js或“构建npm”。
+已有业务库先执行包内 **数据库升级006.sql**。该脚本要求001—005已安装；缺005时先执行包内005。保留原账号、库存与单据，不要重跑首次初始化SQL。Git流水线部署新后台后，用原管理员账号填写本人手机号，在小程序绑定本人微信即可进入管理员工作台。
 
-优化了绿色卡片主题、岗位工作台、大字数量输入、核对摘要、列表状态及空页提示。包内附导入说明、发布试上线说明、员工指引和真机验收清单。“我的身份”页面显示版本 **1.1.0**；开发登录关闭。
+解压后导入同时含 `project.config.json` 和 `miniprogram` 的 **vegetable-miniprogram** 文件夹。AppID、envId和服务名已填好；无需构建npm，开发登录关闭。“我的身份”和上传版本号均为 **1.2.0**。
 
-源码提交版本记录在包内 `工程信息.json`，包含12个页面和2个组件。前端45项用例、100项浏览器映射布局检查以及工程注册/事件/依赖加载和cloud通道替身检查通过。用户反馈整体连通正常；微信原生渲染和数字键盘仍请在预览真机检查。上传版本号填 **1.1.0**，然后在小程序管理平台设置体验版并添加体验成员。
+管理员页面约5秒更新装菜、回收入库、发货出库等动态，支持个人未读和完整明细。微信订阅通知的发送队列已完成，需提供真实模板ID、字段信息并配置服务后启用；普通一次性订阅每次授权对应下一笔新变动。具体步骤见包内发布试上线说明。
 
-ZIP完整性及SHA256已检查，校验值在同目录 `.sha256` 文件。`vegetable-miniprogram-import.zip` 为同一版的兼容文件名。
+包内 `工程信息.json` 记录源码提交版本，包含14个页面和2个组件。51项前端用例、63项C#用例、11项编译包/API/MySQL及浏览器端到端用例、124项浏览器映射布局检查通过。真实微信模板推送、原生渲染、键盘与上传发布须在体验版验收。
 
-更新工程时运行 `pnpm package:miniprogram`，再将 `out/miniprogram-delivery/` 下的两个ZIP与 `.sha256` 一并更新到此目录；GitHub Actions也会保存生成的工程包。
+同目录 `vegetable-miniprogram-import.zip` 与1.2.0文件内容相同。旧1.1.0包保留为历史版本。

@@ -55,7 +55,18 @@ await writeFile(
 );
 await cp(resolve(root, 'docs/miniprogram-import.md'), resolve(project, 'README-导入说明.md'));
 await cp(resolve(root, 'LICENSE'), resolve(project, 'LICENSE'));
-await cp(resolve(root, 'docs/miniprogram-release-1.1.0.md'), resolve(project, '发布试上线说明.md'));
+await cp(
+  resolve(root, 'database/wechat-cloudrun-upgrade-006.sql'),
+  resolve(project, '数据库升级006.sql'),
+);
+await cp(
+  resolve(root, 'database/wechat-cloudrun-upgrade-005.sql'),
+  resolve(project, '数据库升级005.sql'),
+);
+await cp(
+  resolve(root, `docs/miniprogram-release-${release.version}.md`),
+  resolve(project, '发布试上线说明.md'),
+);
 await writeFile(
   resolve(project, '微信验收清单.md'),
   (await readFile(resolve(root, 'docs/miniprogram-verification.md'), 'utf8')).replaceAll(

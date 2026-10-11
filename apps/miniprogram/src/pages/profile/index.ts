@@ -20,7 +20,7 @@ Page({
           name: session.name,
           role: session.selectedRole ?? '',
           roles: session.roles
-            .filter((role) => ['DRIVER', 'WORKER', 'OUTBOUND'].includes(role))
+            .filter((role) => ['ADMIN', 'DRIVER', 'WORKER', 'OUTBOUND'].includes(role))
             .map((role) => ({ value: role, label: roleLabels[role] })),
         });
       }

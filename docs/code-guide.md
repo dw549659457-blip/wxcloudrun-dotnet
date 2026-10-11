@@ -52,3 +52,11 @@ remark已实现。检查DocumentInput.Remark（最多500字）；DocumentService
 ## 后台会计权限与请求审计
 
 `Domain/BackOfficePermissions.cs` 定义可配置操作；`PermissionService` 读写数据库角色配置并审计修改。`AuthService` 对每个后台请求重新读取权限并返回 `Actor`。查询、导出和业务操作在 Repository/Service 内分别校验，管理员保留全权限；会计只对WEB_ADMIN Cookie会话获得配置权限。`Middleware/BackOfficeAudit` 在MVC业务执行前持久化开始记录，执行后记录结果；`OperationAuditService` 保留安全查询条件和身份快照。`DocumentService` 的草稿创建、编辑、删除与库存提交同时保存事务内业务审计。前端 `useAuth.can` 控制入口和按钮，`PermissionsPage` 调整会计配置，`AuditPage` 关联请求日志与变更明细；后端检查不能被前端绕过。第005迁移与已有库升级脚本见 `docs/backoffice-permissions-audit.md`。
+
+## 管理员动态与微信提醒
+
+`DocumentService`正式入账及冲销在原事务内调用`StockNotificationService.Capture`，保存库存流水/装菜产出快照；配置模板并有本人订阅记录时，同时预留该次授权并登记待发送任务。006迁移尚未安装时跳过新动态，升级后新入账启用，不回填旧业务。`StockNotificationsController`只向ADMIN开放列表、明细和个人已读；`BackOfficeAudit`也记录MINI管理员的后台操作。
+
+`NotificationWorker`调用`NotificationDeliveryService`，在短事务内领取带租约任务，再在事务外通过`WechatGateway`调用官方subscribe/send。明确忙/令牌错误有限重试；网络中断或发送中租约过期保留UNCERTAIN，避免不确定时重复发送。微信错误不会回滚业务，详细结果可在小程序管理员工作台查看。`NotificationSettings`读取模板ID/字段/state，缺失或错误时停用微信发送，不影响记账和页面动态。
+
+原生`pages/admin`在显示期间每5秒查询，隐藏后停止且忽略旧请求回填；`pages/notification`展示入账时快照。`services/notifications.ts`负责数量/UTC+8时间、发送状态和按账号保存稳定的订阅登记key，断网同步沿用原key。数据库/通知替身测试在`NotificationTests.cs`和`WechatNotificationGatewayTests.cs`，原生页面轮询/权限/SDK替身在`notifications.test.ts`。

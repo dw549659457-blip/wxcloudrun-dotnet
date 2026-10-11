@@ -18,7 +18,7 @@ public sealed class BackOfficeAudit(RequestDelegate next, ILogger<BackOfficeAudi
             if (endpoint.ControllerName != "Auth" || !PublicActions.Contains(endpoint.ActionName))
             {
                 var actor = await auth.Authenticate(context);
-                if (actor.SessionType == SessionTypes.WebAdmin)
+                if (actor.SessionType == SessionTypes.WebAdmin || actor.IsAdmin)
                     context.Items["OperationLogId"] = await audit.Start(context, actor);
             }
             await next(context);
@@ -29,7 +29,7 @@ public sealed class BackOfficeAudit(RequestDelegate next, ILogger<BackOfficeAudi
             try
             {
                 // CSRF/权限拒绝也留记录；已认证的后台身份来自服务器会话。
-                if (context.Items["OperationLogId"] is not long && context.Items["AuditActor"] is Actor denied && denied.SessionType == SessionTypes.WebAdmin)
+                if (context.Items["OperationLogId"] is not long && context.Items["AuditActor"] is Actor denied && (denied.SessionType == SessionTypes.WebAdmin || denied.IsAdmin))
                     context.Items["OperationLogId"] = await audit.Start(context, denied);
                 if (context.Items["OperationLogId"] is long id)
                     await audit.Complete(id, failure is null ? context.Response.StatusCode : ApiErrors.Status(failure),

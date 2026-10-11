@@ -76,6 +76,7 @@ class NativeRuntime {
     enableAlertBeforeUnload: () => undefined,
     disableAlertBeforeUnload: () => undefined,
     pageScrollTo: () => undefined,
+    setNavigationBarTitle: () => undefined,
     showModal: (options: { success(choice: { confirm: boolean; cancel: boolean }): void }) =>
       options.success({ confirm: true, cancel: false }),
     navigateBack: () => undefined,
@@ -183,7 +184,9 @@ class NativeRuntime {
     page.setData = (value) => {
       Object.assign(page.data, value);
     };
-    await page.onLoad(query);
+    if (typeof page.onLoad === 'function') {
+      await page.onLoad(query);
+    }
     expect(page.data.error, `${name} load`).toBe('');
     return page;
   }
@@ -350,4 +353,80 @@ test('原生页面执行1000→派发100→消耗70→回收25损耗5；12箱出
     '/api/admin/reconcile',
   );
   expect(reconciliation.consistent).toBe(true);
+});
+
+// 使用实际发布JS与真实本地API/MySQL；微信通道仍为替身。
+test('管理员原生工作台查询入账动态与库存，详情已读同步，普通员工被拒绝', async ({ request }) => {
+  const admin = await employee(request, 'admin');
+  const outbound = await employee(request, 'outbound1');
+  const worker = await employee(request, 'worker1');
+  const unique = String(Date.now());
+  const vegetable = await archive(request, admin, 'vegetable-types', `通知白菜${unique}`, '箱');
+  const customer = await archive(request, admin, 'customers', `通知客户${unique}`);
+  await actorRequest(request, admin, 'post', '/api/stock-documents', {
+    post: true,
+    document: { businessDate: '2026-10-11', items: [{ itemId: vegetable, quantity: '7' }] },
+  });
+  interface AdministratorPage {
+    onShow(): Promise<void>;
+    onHide(): void;
+    refresh(reset?: boolean): Promise<void>;
+    data: {
+      error: string;
+      subscription: { configured: boolean };
+      vegetables: InventoryRow[];
+      items: {
+        isRead: boolean;
+        notification: {
+          id: number;
+          documentId: number;
+          lines: { itemId: number; deltaText: string; balanceText: string }[];
+        };
+      }[];
+    };
+  }
+  const runtime = new NativeRuntime();
+  const page = (await runtime.load('admin', admin)) as unknown as AdministratorPage;
+  try {
+    await page.onShow();
+    expect(page.data.error).toBe('');
+    expect(page.data.subscription.configured).toBe(false);
+    const result = await actorRequest<{ id: number }>(request, outbound, 'post', '/api/outbounds', {
+      post: true,
+      document: {
+        businessDate: '2026-10-11',
+        customerId: customer,
+        items: [{ itemId: vegetable, quantity: '2' }],
+      },
+    });
+    await page.refresh(true);
+    const change = page.data.items.find((row) => row.notification.documentId === result.id);
+    expect(change).toBeDefined();
+    expect(change?.isRead).toBe(false);
+    expect(change?.notification.lines[0].deltaText).toBe('-2');
+    expect(change?.notification.lines[0].balanceText).toBe('5');
+    const details = (await runtime.load('notification', admin, {
+      id: String(change?.notification.id),
+    })) as unknown as {
+      load(): Promise<void>;
+      data: { error: string; detail: { number: string } };
+    };
+    await details.load();
+    expect(details.data.error).toBe('');
+    expect(details.data.detail.number).toContain('OUTBOUND-');
+    await page.refresh(true);
+    expect(page.data.items.find((row) => row.notification.documentId === result.id)?.isRead).toBe(
+      true,
+    );
+  } finally {
+    page.onHide();
+  }
+  const denied = (await new NativeRuntime().load('admin', worker)) as unknown as AdministratorPage;
+  try {
+    await denied.onShow();
+    expect(denied.data.error).toContain('仅管理员');
+    expect(denied.data.items).toEqual([]);
+  } finally {
+    denied.onHide();
+  }
 });

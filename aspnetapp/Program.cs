@@ -20,6 +20,7 @@ try
         options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(15);
     });
     builder.Services.AddSingleton(settings);
+    builder.Services.AddSingleton(NotificationSettings.Load());
     builder.Services.AddSingleton<Database>();
     builder.Services.AddSingleton<TransactionService>();
     builder.Services.AddSingleton<DocumentRepository>();
@@ -27,6 +28,9 @@ try
     builder.Services.AddSingleton<QueryRepository>();
     builder.Services.AddSingleton<ReportRepository>();
     builder.Services.AddSingleton<DocumentService>();
+    builder.Services.AddSingleton<StockNotificationService>();
+    builder.Services.AddSingleton<NotificationDeliveryService>();
+    builder.Services.AddHostedService<NotificationWorker>();
     builder.Services.AddSingleton<AuthService>();
     builder.Services.AddSingleton<ArchiveService>();
     builder.Services.AddSingleton<PermissionService>();
@@ -34,7 +38,9 @@ try
     builder.Services.AddSingleton<ExcelService>();
     builder.Services.AddSingleton<MigrationRunner>();
     builder.Services.AddSingleton<Initialization>();
-    builder.Services.AddSingleton<IWechatGateway, WechatGateway>();
+    builder.Services.AddSingleton<WechatGateway>();
+    builder.Services.AddSingleton<IWechatGateway>(services => services.GetRequiredService<WechatGateway>());
+    builder.Services.AddSingleton<IWechatNotifier>(services => services.GetRequiredService<WechatGateway>());
     builder.Services.AddHttpClient("wechat", client => client.Timeout = TimeSpan.FromSeconds(10));
     // HttpClient 默认日志包含带 secret/access_token 的 URL，必须关闭该类别。
     builder.Logging.AddFilter("System.Net.Http.HttpClient.wechat", LogLevel.None);

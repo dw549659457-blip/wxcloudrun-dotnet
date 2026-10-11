@@ -11,7 +11,7 @@ public interface IWechatGateway
 }
 
 /// <summary>不采信公网 x-wx-* 头；登录 code 和手机号 code 分别向微信换取真实信息。</summary>
-public sealed class WechatGateway(AppSettings settings, IHttpClientFactory clients) : IWechatGateway
+public sealed class WechatGateway(AppSettings settings, IHttpClientFactory clients) : IWechatGateway, IWechatNotifier
 {
     private readonly SemaphoreSlim tokenGate = new(1, 1);
     private string? accessToken;
@@ -49,12 +49,13 @@ public sealed class WechatGateway(AppSettings settings, IHttpClientFactory clien
         Check(json.RootElement);
         return (settings.AppId!, json.RootElement.GetProperty("openid").GetString()!);
     }
-    private async Task<string> Token()
+    private async Task<string> Token(bool reset = false)
     {
         CheckConfiguration();
         await tokenGate.WaitAsync();
         try
         {
+            if (reset) accessToken = null;
             if (accessToken is not null && DateTime.UtcNow < expiresAt)
             {
                 return accessToken;
@@ -93,5 +94,30 @@ public sealed class WechatGateway(AppSettings settings, IHttpClientFactory clien
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Check(json.RootElement);
         return json.RootElement.GetProperty("phone_info").GetProperty("purePhoneNumber").GetString()!;
+    }
+    public async Task<WechatDeliveryResult> Send(WechatNotificationMessage message, CancellationToken cancellation)
+    {
+        // subscribe/send 没有应用可控幂等键。网络中断/非JSON响应属于未知结果，禁止盲目重发。
+        try
+        {
+            for (var attempt = 0; attempt < 2; attempt++)
+            {
+                var token = await Token(attempt > 0);
+                using var response = await clients.CreateClient("wechat").PostAsJsonAsync(
+                    $"https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token={Uri.EscapeDataString(token)}",
+                    new { touser = message.OpenId, template_id = message.TemplateId, page = message.Page,
+                        miniprogram_state = message.MiniprogramState, lang = "zh_CN", data = message.Data }, cancellation);
+                if (!response.IsSuccessStatusCode) return new(null, Uncertain: true);
+                using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellation));
+                if (!json.RootElement.TryGetProperty("errcode", out var code) || !code.TryGetInt32(out var value)) return new(null, Uncertain: true);
+                if (attempt == 0 && value is 40001 or 42001) continue;
+                return new(value, Retryable: value is -1 or 40001 or 42001 or 45009);
+            }
+        }
+        catch (Exception error) when (error is HttpRequestException or OperationCanceledException or JsonException)
+        {
+            return new(null, Uncertain: true);
+        }
+        return new(null);
     }
 }

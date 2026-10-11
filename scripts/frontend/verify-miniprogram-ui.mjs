@@ -54,7 +54,93 @@ const posted = {
   },
   context: { growerName: '王家棚户' },
 };
+const administrator = {
+  name: '管理员王师傅',
+  loading: false,
+  unreadCount: 3,
+  latestId: 10,
+  lastUpdated: '2026-10-11 16:10:00',
+  vegetables: [
+    { id: 3, name: '白菜', quantity: '1234', unit: '箱' },
+    { id: 4, name: '西红柿', quantity: '999999999999999.999', unit: '公斤' },
+  ],
+  packaging: [{ id: 1, name: '泡沫箱', quantity: '925', unit: '个' }],
+  subscription: {
+    configured: false,
+    templateId: '',
+    paused: false,
+    recordedSubscriptions: 0,
+    configurationError: '',
+    lastDelivery: null,
+  },
+  items: [
+    {
+      id: 10,
+      isRead: false,
+      notification: {
+        id: 10,
+        title: '发货出库',
+        actor: '李师傅',
+        party: '东村蔬菜配送中心',
+        time: '2026-10-11 16:05:00',
+        number: 'OUTBOUND-20261011-0000000000000123456789',
+        lineCount: 1,
+        lines: [
+          {
+            key: 'VEGETABLE:3',
+            name: '白菜',
+            unit: '箱',
+            label: '仓库蔬菜',
+            deltaText: '-3',
+            balance: '8',
+            balanceText: '8',
+          },
+        ],
+      },
+    },
+  ],
+};
 const scenarios = [
+  ['admin', 'admin', administrator],
+  ['admin-empty', 'admin', { loading: false, name: '管理员', items: [], subscription: null }],
+  [
+    'admin-authorized',
+    'admin',
+    {
+      ...administrator,
+      expanded: true,
+      newCount: 20,
+      pendingSubscription: true,
+      subscription: {
+        ...administrator.subscription,
+        configured: true,
+        recordedSubscriptions: 1,
+        lastDelivery: { state: 'UNCERTAIN', errorCode: null },
+      },
+    },
+  ],
+  [
+    'admin-denied',
+    'admin',
+    {
+      ...administrator,
+      subscription: {
+        ...administrator.subscription,
+        configured: true,
+        paused: true,
+        lastDelivery: { state: 'FAILED', errorCode: 43101 },
+      },
+    },
+  ],
+  [
+    'notification',
+    'notification',
+    {
+      loading: false,
+      detail: { ...administrator.items[0].notification, businessDate: '2026-10-11' },
+    },
+  ],
+  ['notification-error', 'notification', { loading: false, error: '仅管理员可以查看这条动态。' }],
   ['start', 'start', {}],
   ['start-phone', 'start', { stage: 'PHONE' }],
   ['start-confirm', 'start', { stage: 'CONFIRM', candidate: '王师傅 · 司机' }],
@@ -479,6 +565,13 @@ try {
             scrollWidth: document.documentElement.scrollWidth,
             outside,
             smallButtons,
+            squeezedCards: visible
+              .filter(
+                (element) =>
+                  element.matches('.notification-card > .record-number') &&
+                  element.getBoundingClientRect().width < 180,
+              )
+              .map((element) => element.textContent),
             quantityInputs,
             startBottom: start?.getBoundingClientRect().bottom,
           };
@@ -499,6 +592,7 @@ try {
       );
       assert.deepEqual(metrics.outside, [], `${name}/${width}/${scale} 内容超出屏幕`);
       assert.deepEqual(metrics.smallButtons, [], `${name}/${width}/${scale} 按钮小于48px`);
+      assert.deepEqual(metrics.squeezedCards, [], `${name}/${width}/${scale} 动态单号被挤成窄列`);
       assert(
         metrics.quantityInputs.every((size) => size >= 80),
         `${name}/${width}/${scale} 数量输入框过窄`,
@@ -519,7 +613,16 @@ try {
       if (
         width === 375 &&
         scale === 1 &&
-        ['start', 'home-driver', 'work', 'recovery-confirm', 'inventory', 'profile'].includes(name)
+        [
+          'start',
+          'home-driver',
+          'work',
+          'recovery-confirm',
+          'inventory',
+          'profile',
+          'admin',
+          'notification',
+        ].includes(name)
       ) {
         await page.screenshot({ path: `${output}/${name}.png`, fullPage: true });
       }

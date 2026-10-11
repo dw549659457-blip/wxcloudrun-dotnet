@@ -7,7 +7,20 @@ import {
 import { api } from '../../services/api';
 import { requireSession } from '../../services/session';
 Page({
-  data: { rows: [] as InventoryRow[], page: 1, canNext: false, loading: false, error: '' },
+  data: {
+    rows: [] as InventoryRow[],
+    page: 1,
+    canNext: false,
+    loading: false,
+    error: '',
+    domain: 'vegetables',
+    title: '蔬菜库存',
+  },
+  onLoad(options: Record<string, string>) {
+    const domain = options.domain === 'packaging' ? 'packaging' : 'vegetables';
+    this.setData({ domain, title: domain === 'packaging' ? '仓库包装库存' : '蔬菜库存' });
+    wx.setNavigationBarTitle({ title: this.data.title });
+  },
   onShow() {
     void this.load();
   },
@@ -21,12 +34,15 @@ Page({
       if (!session) {
         return;
       }
-      if (session.selectedRole !== 'OUTBOUND') {
-        throw new Error('请先选择出库员身份');
+      if (
+        !session.roles.includes('ADMIN') &&
+        (session.selectedRole !== 'OUTBOUND' || this.data.domain !== 'vegetables')
+      ) {
+        throw new Error('当前岗位不能查询此类库存');
       }
       const result = await api.request<PageResult<InventoryRow>>(
         'GET',
-        `/api/inventory/vegetables?${queryString({ page: this.data.page, pageSize: 20 })}`,
+        `/api/inventory/${this.data.domain}?${queryString({ page: this.data.page, pageSize: 20 })}`,
       );
       this.setData({ rows: result.items, canNext: result.items.length === 20 });
     } catch (failure) {

@@ -103,3 +103,20 @@ Web页面由 `/admin/` 提供，只有该前缀使用SPA fallback；未知 `/api
 ## 后台会计权限与操作审计
 
 管理员及会计都使用 `admin-login` 和 Cookie/CSRF；登录和 `me` 返回有效 `permissions`。会计默认可查询、导出全部业务数据和报表，其他业务操作由管理员配置。账号/角色管理、绑定审批、权限配置和审计仍仅限管理员。`GET/PUT /api/backoffice-permissions` 管理会计角色配置；`GET /api/exports/{resource}` 扩展档案、员工、库存、批次及单据导出。`GET /api/backoffice-operation-logs` 与 `/excel` 为管理员操作记录查询/导出，支持角色、操作者、操作、模块、日期、状态和请求 ID。`audit-logs?requestId=...` 查询同一请求的变更前后明细。完整权限键、筛选、升级顺序见 [会计权限和审计说明](backoffice-permissions-audit.md)。
+
+## 管理员小程序库存动态（006 / 1.2.0）
+
+全部路径前缀 `/api/admin/stock-notifications`，要求已启用ADMIN账号。小程序使用现有微信绑定Bearer会话；Web Cookie写请求仍须CSRF。数量字段沿用decimal字符串口径。操作记入后台“小程序库存动态”审计。
+
+| 方法/路径 | 参数与作用 |
+|---|---|
+| `GET /` | `before=0&limit=20`，limit范围1—50；返回items（notification+isRead）、latestId、unreadCount、hasMore、subscription、updatedAt |
+| `GET /{id}` | 完整事件快照：单号、种类、POST/REVERSE、操作人、棚户/客户、时间与全部lines |
+| `POST /{id}/read` | 标记当前管理员已读 |
+| `POST /read` | `{"throughId":123}`，标记该事件及以前已读，不包含后续新动态 |
+| `POST /subscribe` | 仅本人MINI会话；`{"templateId":"真实模板ID","decision":"accept"}`，decision还可为reject/ban；带稳定 `Idempotency-Key` |
+| `POST /preference` | `{"paused":true}` 暂停，false恢复 |
+
+lines含itemId/name/unit/domain/delta/balance；domain为WAREHOUSE_PACKAGING、EXTERNAL_PACKAGING、VEGETABLE或OUTPUT。OUTPUT为装菜产出未入库，EXTERNAL与OUTPUT的balance为null；仓库balance为该入账时的余额。列表最多显示3行，lineCount保留完整数量，详情包含全部行。
+
+未升级006返回503/NOTIFICATIONS_NOT_READY，原记账继续工作；模板未配置时feed正常但subscription.configured=false，订阅返回503/NOTIFICATION_NOT_CONFIGURED。草稿不产生动态，成功正式入账/冲销与动态同事务；事务提交后后台领取微信发送任务，微信失败不改变库存。字段映射与发送状态见 [发布说明](miniprogram-release-1.2.0.md)。普通一次性订阅授权不等于持续推送资格，发送SENT只表示微信接收成功。

@@ -1,4 +1,5 @@
 export * from './types';
+export * from './notifications';
 export * from './constants';
 export * from './quantity';
 export * from './errors';

@@ -2,6 +2,8 @@
   "pages": [
     "pages/start/index",
     "pages/home/index",
+    "pages/admin/index",
+    "pages/notification/index",
     "pages/batches/index",
     "pages/dispatch/index",
     "pages/work/index",

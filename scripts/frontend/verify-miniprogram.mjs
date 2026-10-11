@@ -147,7 +147,7 @@ export function verifyMiniprogram(projectDirectory) {
   for (const page of manifest.pages) {
     registration(page);
   }
-  assert.equal(manifest.pages.length, 12);
+  assert.equal(manifest.pages.length, 14);
   assert.equal(checkedComponents.size, 2);
   return {
     project,

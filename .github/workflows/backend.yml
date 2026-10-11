@@ -37,6 +37,7 @@ jobs:
       - run: pnpm package:miniprogram
       - run: python3 scripts/generate-cloudrun-sql.py --check
       - run: python3 scripts/generate-backoffice-upgrade-sql.py --check
+      - run: python3 scripts/generate-notification-upgrade-sql.py --check
       - run: dotnet restore aspnetapp.sln --locked-mode
       - run: dotnet test tests/Business.Tests.csproj --no-restore --logger 'console;verbosity=minimal'
       - run: dotnet publish aspnetapp -c Release --no-restore -o out/api /p:UseAppHost=false

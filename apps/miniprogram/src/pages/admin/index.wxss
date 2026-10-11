@@ -1,0 +1,54 @@
+.admin-hero {
+  padding: 24px 20px;
+  background: #176747;
+  color: white;
+  border-radius: 18px;
+}
+.admin-hero .caption {
+  color: #e0f0e4;
+}
+.admin-hero .title {
+  color: #fff;
+  margin: 10px 0;
+}
+.stock-row,
+.notification-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf1eb;
+}
+.stock-row > view,
+.notification-line > view {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.stock-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #176747;
+  overflow-wrap: anywhere;
+}
+.notification-card {
+  display: block;
+  text-align: left;
+  margin: 14px 0;
+  padding: 20px;
+  border: 1px solid #dce6d9;
+  border-radius: 18px;
+  line-height: 1.65;
+}
+.notification-card .card-title {
+  flex: 1;
+}
+.unread {
+  background: #176747;
+  color: white;
+}
+.detail-link {
+  margin-top: 12px;
+  color: #176747;
+  font-weight: 600;
+}

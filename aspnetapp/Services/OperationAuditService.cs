@@ -6,13 +6,13 @@ namespace aspnetapp.Services;
 
 public sealed class OperationAuditService(Database database, AppSettings settings)
 {
-    private static readonly string[] SafeQueryKeys = ["page", "pageSize", "from", "to", "sort", "itemId", "growerId", "driverId", "source", "search", "version", "actorId", "action", "module", "statusCode", "role", "requestId", "operation"];
+    private static readonly string[] SafeQueryKeys = ["page", "pageSize", "before", "limit", "from", "to", "sort", "itemId", "growerId", "driverId", "source", "search", "version", "actorId", "action", "module", "statusCode", "role", "requestId", "operation"];
     public static (string Action, string Module) Describe(HttpRequest request)
     {
         var path = request.Path.Value ?? "";
         var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
         var module = segments.ElementAtOrDefault(1) ?? "unknown";
-        if (module == "admin") module = segments.ElementAtOrDefault(2) == "reconcile" ? "reconcile" : "documents";
+        if (module == "admin") module = segments.ElementAtOrDefault(2) switch { "reconcile" => "reconcile", "stock-notifications" => "stock-notifications", _ => "documents" };
         var exporting = module == "exports";
         if (exporting)
         {

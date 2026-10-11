@@ -55,6 +55,7 @@ const modules: Record<string, string> = {
   'vegetable-types': '蔬菜档案',
   customers: '客户档案',
   inventory: '库存',
+  'stock-notifications': '小程序库存动态',
   batches: '业务批次',
   dispatches: '包装下发',
   'work-records': '装菜加工',

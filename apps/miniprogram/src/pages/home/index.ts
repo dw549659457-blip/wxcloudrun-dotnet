@@ -28,7 +28,9 @@ Page({
       if (!session) {
         return;
       }
-      const roles = session.roles.filter((role) => ['DRIVER', 'WORKER', 'OUTBOUND'].includes(role));
+      const roles = session.roles.filter((role) =>
+        ['ADMIN', 'DRIVER', 'WORKER', 'OUTBOUND'].includes(role),
+      );
       if (roles.length === 0) {
         this.setData({
           name: session.name,
@@ -36,7 +38,7 @@ Page({
           role: '',
           roleName: '',
           selecting: false,
-          error: '当前账号为后台账号，请使用管理后台；小程序需要司机、装菜人员或出库员岗位。',
+          error: '当前账号请使用管理后台；小程序支持管理员、司机、装菜人员或出库员岗位。',
         });
         return;
       }
@@ -48,6 +50,10 @@ Page({
       if (selected && selected !== session.selectedRole) {
         await api.request('POST', '/api/auth/select-role', { role: selected });
         saveSession({ ...session, selectedRole: selected });
+      }
+      if (selected === 'ADMIN') {
+        wx.redirectTo({ url: '/pages/admin/index' });
+        return;
       }
       this.setData({
         name: session.name,
