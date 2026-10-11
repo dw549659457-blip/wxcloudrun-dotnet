@@ -4,8 +4,10 @@ import type { DocumentInput } from '@warehouse/contracts';
 import { DocumentSummary } from '../components/DocumentSummary';
 import { DocumentEditor } from '../components/DocumentEditor';
 import { ErrorNotice, PageHeading } from '../components/Common';
+import { useAuth } from '../hooks/useAuth';
 import { useSubmission } from '../hooks/useSubmission';
 export function StockPage() {
+  const { can } = useAuth();
   const [confirmation, setConfirmation] = useState<DocumentInput | null>(null);
   const [success, setSuccess] = useState('');
   const [formKey, setFormKey] = useState(0);
@@ -47,6 +49,7 @@ export function StockPage() {
         <DocumentEditor
           key={formKey}
           resource="stock-documents"
+          submitDisabled={!can('documents.post')}
           disabled={submission.pending || submission.loading}
           onSubmit={setConfirmation}
           onSaveDraft={(document) => {

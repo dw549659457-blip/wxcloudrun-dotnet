@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'DRIVER' | 'WORKER' | 'OUTBOUND';
+export type Role = 'ADMIN' | 'ACCOUNTANT' | 'DRIVER' | 'WORKER' | 'OUTBOUND';
 export type DocumentResource =
   'dispatches' | 'work-records' | 'recoveries' | 'outbounds' | 'stock-documents';
 export type DocumentKind = 'DISPATCH' | 'WORK' | 'RECOVERY' | 'OUTBOUND' | 'STOCK';
@@ -18,6 +18,7 @@ export interface Identity {
   roles: Role[];
   sessionType: 'WEB_ADMIN' | 'MINIPROGRAM';
   selectedRole?: Role | null;
+  permissions?: string[];
 }
 export interface EmployeeSession {
   userId: number;
@@ -31,6 +32,7 @@ export interface AdminLogin {
   name: string;
   roles: Role[];
   csrfToken: string;
+  permissions: string[];
 }
 export interface BindingResponse {
   bindingToken: string;
@@ -61,6 +63,43 @@ export interface PageQuery {
   driverId?: number;
   source?: string;
   search?: string;
+  actorId?: number;
+  action?: string;
+  module?: string;
+  statusCode?: number;
+  role?: Role;
+  requestId?: string;
+}
+export interface PermissionDefinition {
+  key: string;
+  module: string;
+  label: string;
+  defaultGranted: boolean;
+}
+export interface PermissionPolicy {
+  role: 'ACCOUNTANT';
+  version: number;
+  catalog: PermissionDefinition[];
+  permissions: string[];
+}
+export interface OperationLog {
+  id: number;
+  actorId: number;
+  username: string;
+  actorName: string;
+  actorRoles: string;
+  action: string;
+  module: string;
+  method: string;
+  path: string;
+  queryJson: string;
+  requestId: string;
+  statusCode: number | null;
+  state: 'STARTED' | 'COMPLETED';
+  errorCode: string | null;
+  durationMs: number | null;
+  createdAt: string;
+  completedAt: string | null;
 }
 export interface Archive {
   id: number;
@@ -222,6 +261,8 @@ export interface BindingRequest {
 export interface AuditRecord {
   id: number;
   actorId: number;
+  actorName?: string;
+  username?: string;
   action: string;
   entityType: string;
   entityId: number;

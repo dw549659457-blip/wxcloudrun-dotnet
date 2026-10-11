@@ -21,6 +21,7 @@ export function DocumentEditor({
   onSubmit,
   onSaveDraft,
   submitLabel = '检查并提交',
+  submitDisabled = false,
 }: {
   resource: DocumentResource;
   initial?: DocumentInput;
@@ -29,6 +30,7 @@ export function DocumentEditor({
   onSubmit(document: DocumentInput): void;
   onSaveDraft?: (document: DocumentInput) => void;
   submitLabel?: string;
+  submitDisabled?: boolean;
 }) {
   const [form] = Form.useForm<DocumentInput>();
   const [archives, setArchives] = useState<Archive[]>([]);
@@ -323,7 +325,7 @@ export function DocumentEditor({
           <Input.TextArea maxLength={500} showCount rows={3} />
         </Form.Item>
         <Space wrap>
-          <Button type="primary" htmlType="submit">
+          <Button type="primary" htmlType="submit" disabled={submitDisabled}>
             {submitLabel}
           </Button>
           {onSaveDraft && (

@@ -7,10 +7,14 @@ import {
   type UserInput,
   type UserRecord,
 } from '@warehouse/contracts';
+import { DataExportButton } from '../components/DataExportButton';
+import { useAuth } from '../hooks/useAuth';
 import { api } from '../api/client';
 import { ErrorNotice, PageControls, PageHeading } from '../components/Common';
 import { usePagedQuery } from '../hooks/usePagedQuery';
 export function UsersPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.roles.includes('ADMIN') ?? false;
   const data = usePagedQuery<UserRecord>('/api/users');
   const [editing, setEditing] = useState<UserRecord | 'new' | null>(null);
   const [form] = Form.useForm<UserInput>();
@@ -74,11 +78,16 @@ export function UsersPage() {
     <>
       <PageHeading
         title="员工与角色"
-        description="先登记员工本人姓名、手机号和岗位。员工首次使用小程序只需确认身份，不用设置密码。修改账号会撤销旧会话。"
+        description="管理员维护员工和后台账号。管理员、会计需要独立密码；司机、工人和出库员通过微信确认身份。修改账号会撤销旧会话。"
         extra={
-          <Button type="primary" onClick={() => open('new')}>
-            新增员工
-          </Button>
+          <Space>
+            <DataExportButton resource="users" module="users" />
+            {isAdmin && (
+              <Button type="primary" onClick={() => open('new')}>
+                新增员工
+              </Button>
+            )}
+          </Space>
         }
       />
       <ErrorNotice message={data.error} />
@@ -103,8 +112,9 @@ export function UsersPage() {
             title: '操作',
             render: (_, item) => (
               <Space>
-                <Button onClick={() => open(item)}>编辑</Button>
+                {isAdmin && <Button onClick={() => open(item)}>编辑</Button>}
                 <Button
+                  style={{ display: isAdmin ? undefined : 'none' }}
                   disabled={!item.bound}
                   onClick={() => {
                     setUnbinding(item);
@@ -169,7 +179,7 @@ export function UsersPage() {
           </Form.Item>
           <Form.Item
             name="password"
-            label="管理员密码（普通员工不用填，编辑留空则保持原密码）"
+            label="后台密码（管理员、会计必填，编辑留空则保持原密码）"
             rules={[{ min: 12, max: 128, message: '密码需12—128字符' }]}
           >
             <Input.Password autoComplete="new-password" />

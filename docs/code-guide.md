@@ -48,3 +48,7 @@ remark已实现。检查DocumentInput.Remark（最多500字）；DocumentService
 `pnpm build:admin` → Vite dist → `scripts/frontend/copy-admin.mjs` → `aspnetapp/wwwroot/admin` → dotnet publish或Docker。`pnpm build:miniprogram` → esbuild原生页面JS + WXML/WXSS/JSON复制 → 开发者工具。Docker只发布管理端，不上传微信小程序。
 
 `tests/frontend/contracts.test.ts`/`miniprogram.test.ts` 用Vitest检验边界；`tests/frontend/e2e` 用Playwright浏览器和原生控制器访问真实API/MySQL。`scripts/frontend/e2e-server.mjs` 只建/删随机本机测试库。测试文件采用中文场景名和实际数量断言；`out/mini-verification` 是独立本地验证适配包，禁止生产发布。
+
+## 后台会计权限与请求审计
+
+`Domain/BackOfficePermissions.cs` 定义可配置操作；`PermissionService` 读写数据库角色配置并审计修改。`AuthService` 对每个后台请求重新读取权限并返回 `Actor`。查询、导出和业务操作在 Repository/Service 内分别校验，管理员保留全权限；会计只对WEB_ADMIN Cookie会话获得配置权限。`Middleware/BackOfficeAudit` 在MVC业务执行前持久化开始记录，执行后记录结果；`OperationAuditService` 保留安全查询条件和身份快照。`DocumentService` 的草稿创建、编辑、删除与库存提交同时保存事务内业务审计。前端 `useAuth.can` 控制入口和按钮，`PermissionsPage` 调整会计配置，`AuditPage` 关联请求日志与变更明细；后端检查不能被前端绕过。第005迁移与已有库升级脚本见 `docs/backoffice-permissions-audit.md`。

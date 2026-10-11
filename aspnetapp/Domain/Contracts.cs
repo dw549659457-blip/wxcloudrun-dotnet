@@ -7,10 +7,12 @@ namespace aspnetapp.Domain;
 public static class Roles
 {
     public const string Admin = "ADMIN";
+    public const string Accountant = "ACCOUNTANT";
     public const string Driver = "DRIVER";
     public const string Worker = "WORKER";
     public const string Outbound = "OUTBOUND";
-    public static readonly string[] All = [Admin, Driver, Worker, Outbound];
+    public static readonly string[] All = [Admin, Accountant, Driver, Worker, Outbound];
+    public static bool BackOffice(string[] roles) => roles.Contains(Admin) || roles.Contains(Accountant);
 }
 
 public sealed class BusinessException(int status, string code, string message, object? details = null) : Exception(message)
@@ -22,9 +24,17 @@ public sealed class BusinessException(int status, string code, string message, o
     public static BusinessException Conflict(string code, string message, object? details = null) => new(409, code, message, details);
 }
 
-public sealed record Actor(long Id, string Name, string[] Roles, string SessionType, string TokenHash, string? SelectedRole = null)
+public sealed record Actor(long Id, string Name, string[] Roles, string SessionType, string TokenHash, string? SelectedRole = null, string[]? Permissions = null, string Username = "")
 {
     public bool IsAdmin => Roles.Contains(Domain.Roles.Admin);
+    public bool IsBackOffice => IsAdmin || (SessionType == SessionTypes.WebAdmin && Roles.Contains(Domain.Roles.Accountant));
+    public void RequirePermission(string permission)
+    {
+        if (!IsAdmin && (!IsBackOffice || !(Permissions ?? []).Contains(permission)))
+        {
+            throw new BusinessException(403, "FORBIDDEN", "您没有此操作权限，请联系管理员调整权限");
+        }
+    }
     public void Require(params string[] allowed)
     {
         if (!IsAdmin && !Roles.Any(allowed.Contains))
@@ -60,7 +70,7 @@ public sealed record DocumentRecord(long Id, string Number, string Kind, long Cr
 }
 public sealed record DocumentPage(DocumentRecord[] Items, int Page, int PageSize);
 public sealed record SubmissionResult(long Id, string Number, string Status, int Version);
-public sealed record PageQuery(int Page = 1, int PageSize = 20, DateOnly? From = null, DateOnly? To = null, string Sort = "desc", long? ItemId = null, long? GrowerId = null, long? DriverId = null, string? Source = null, string? Search = null);
+public sealed record PageQuery(int Page = 1, int PageSize = 20, DateOnly? From = null, DateOnly? To = null, string Sort = "desc", long? ItemId = null, long? GrowerId = null, long? DriverId = null, string? Source = null, string? Search = null, long? ActorId = null, string? Action = null, string? Module = null, int? StatusCode = null, string? Role = null, string? RequestId = null);
 
 /// <summary>API 数量只接收十进制字符串；C# decimal 与 MySQL DECIMAL 避免浮点库存误差。</summary>
 public sealed class DecimalStringConverter : JsonConverter<decimal>

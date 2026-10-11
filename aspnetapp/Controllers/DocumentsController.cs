@@ -24,7 +24,7 @@ public sealed class DocumentsController(AuthService authentication, DocumentServ
     [HttpPost("{id:long}/post")]
     public async Task<SubmissionResult> Post(long id, PostInput input) => await service.Post(await Current(), id, DocumentKind, input.Version, Key, RequestId);
     [HttpPut("{id:long}")]
-    public async Task<SubmissionResult> Edit(long id, [FromQuery] int version, DocumentInput input) => await service.Edit(await Current(), id, DocumentKind, version, input);
+    public async Task<SubmissionResult> Edit(long id, [FromQuery] int version, DocumentInput input) => await service.Edit(await Current(), id, DocumentKind, version, input, RequestId);
     [HttpDelete("{id:long}")]
-    public async Task<IActionResult> Delete(long id) { await service.Delete(await Current(), id, DocumentKind); return NoContent(); }
+    public async Task<IActionResult> Delete(long id) { await service.Delete(await Current(), id, DocumentKind, RequestId); return NoContent(); }
 }

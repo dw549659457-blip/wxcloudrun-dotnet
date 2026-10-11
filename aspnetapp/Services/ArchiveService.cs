@@ -16,7 +16,7 @@ public sealed class ArchiveService(TransactionService transactions, DocumentRepo
     };
     public Task<object> Save(Actor actor, string kind, long? id, ArchiveInput input, string requestId)
     {
-        actor.Require(Roles.Admin);
+        actor.RequirePermission("archives.write");
         if (string.IsNullOrWhiteSpace(input.Name) || input.Name.Length > 100 || input.Specification.Length > 200 || input.Contact.Length > 80 || input.Phone.Length > 32 || input.Unit.Length > 16)
         {
             throw BusinessException.Invalid("档案名称或字段长度无效");
@@ -84,15 +84,16 @@ public sealed class ArchiveService(TransactionService transactions, DocumentRepo
             throw BusinessException.Invalid("密码需 12—128 字符");
         }
 
-        if (id is null && input.Roles.Contains(Roles.Admin) && input.Password is null)
+        if (id is null && Roles.BackOffice(input.Roles) && input.Password is null)
         {
-            throw BusinessException.Invalid("管理员需设置独立密码");
+            throw BusinessException.Invalid("管理员或会计需设置独立密码");
         }
 
         var passwordHash = input.Password is null ? null : PasswordService.Hash(input.Password);
         return transactions.Run<object>(async (connection, transaction) =>
         {
             Row? previous = null;
+            string[]? previousRoles = null;
             if (id is null)
             {
                 id = await Database.Insert(connection, transaction, "INSERT INTO Users(Username,Name,Phone,PasswordHash,Enabled,CreatedAt) VALUES(@username,@name,@phone,@password,@enabled,UTC_TIMESTAMP(6))", ("username", input.Username), ("name", input.Name), ("phone", input.Phone), ("password", passwordHash), ("enabled", input.Enabled));
@@ -106,9 +107,10 @@ public sealed class ArchiveService(TransactionService transactions, DocumentRepo
                 }
 
                 previous = rows[0];
-                if (input.Roles.Contains(Roles.Admin) && passwordHash is null && previous.IsNull("PasswordHash"))
+                previousRoles = await AuthService.UserRoles(connection, transaction, id.Value);
+                if (Roles.BackOffice(input.Roles) && passwordHash is null && previous.IsNull("PasswordHash"))
                 {
-                    throw BusinessException.Invalid("管理员需要密码");
+                    throw BusinessException.Invalid("后台账号需要密码");
                 }
 
                 var admins = await Database.Query(connection, transaction, "SELECT DISTINCT u.Id FROM Users u JOIN UserRoles r ON r.UserId=u.Id WHERE u.Enabled=TRUE AND r.Role='ADMIN'");
@@ -131,7 +133,7 @@ public sealed class ArchiveService(TransactionService transactions, DocumentRepo
                 await Database.Execute(connection, transaction, "INSERT INTO UserRoles VALUES(@id,@role)", [("id", id), ("role", role)]);
             }
             // 审计排除手机号、密码、哈希及微信凭证；只保留管理操作所需差异。
-            await audit.Audit(connection, transaction, actor, previous is null ? "CREATE_USER" : "UPDATE_USER", "USER", id.Value, previous is null ? null : new { name = previous.Text("Name"), enabled = previous.Flag("Enabled") }, new { input.Name, input.Enabled, input.Roles, passwordChanged = input.Password is not null }, "", requestId);
+            await audit.Audit(connection, transaction, actor, previous is null ? "CREATE_USER" : "UPDATE_USER", "USER", id.Value, previous is null ? null : new { username = previous.Text("Username"), name = previous.Text("Name"), enabled = previous.Flag("Enabled"), roles = previousRoles }, new { input.Username, input.Name, input.Enabled, input.Roles, passwordChanged = input.Password is not null, phoneChanged = previous is not null && previous.Text("Phone") != input.Phone }, "", requestId);
             return new { id };
         });
     }

@@ -8,7 +8,10 @@ import {
 } from '@warehouse/contracts';
 import { allPages, api, list } from '../api/client';
 import { ErrorNotice, PageHeading, ReportTable } from '../components/Common';
+import { DataExportButton } from '../components/DataExportButton';
+import { useAuth } from '../hooks/useAuth';
 export function DashboardPage({ navigate }: { navigate(path: string): void }) {
+  const { can } = useAuth();
   const [packaging, setPackaging] = useState<InventoryRow[]>([]);
   const [vegetables, setVegetables] = useState<InventoryRow[]>([]);
   const [outside, setOutside] = useState<ReportRow[]>([]);
@@ -20,9 +23,15 @@ export function DashboardPage({ navigate }: { navigate(path: string): void }) {
     setError('');
     try {
       const [packagingRows, vegetableRows, external] = await Promise.all([
-        allPages<InventoryRow>('/api/inventory/packaging'),
-        allPages<InventoryRow>('/api/inventory/vegetables'),
-        list<ReportRow>('/api/reports/external-packaging'),
+        can('inventory.read')
+          ? allPages<InventoryRow>('/api/inventory/packaging')
+          : Promise.resolve([]),
+        can('inventory.read')
+          ? allPages<InventoryRow>('/api/inventory/vegetables')
+          : Promise.resolve([]),
+        can('reports.read')
+          ? list<ReportRow>('/api/reports/external-packaging')
+          : Promise.resolve({ items: [] }),
       ]);
       setPackaging(packagingRows);
       setVegetables(vegetableRows);
@@ -66,7 +75,7 @@ export function DashboardPage({ navigate }: { navigate(path: string): void }) {
         extra={<Button onClick={reload}>刷新数据</Button>}
       />
       <ErrorNotice message={error} />
-      <Row gutter={[20, 20]}>
+      <Row gutter={[20, 20]} style={{ display: can('inventory.read') ? undefined : 'none' }}>
         <Col xs={24} md={12}>
           <Card title="仓库包装" loading={loading}>
             <div className="quantity-summary">
@@ -93,16 +102,30 @@ export function DashboardPage({ navigate }: { navigate(path: string): void }) {
         </Col>
       </Row>
       <div className="quick-actions">
-        <Button type="primary" onClick={() => navigate('/admin/stock')}>
+        <Button
+          style={{ display: can('documents.create') ? undefined : 'none' }}
+          type="primary"
+          onClick={() => navigate('/admin/stock')}
+        >
           登记入库 / 库存调整
         </Button>
-        <Button onClick={() => navigate('/admin/reports/inventory-ledger')}>查看库存流水</Button>
-        <Button onClick={reconcile}>只读账本对账</Button>
+        <Button
+          style={{ display: can('reports.read') ? undefined : 'none' }}
+          onClick={() => navigate('/admin/reports/inventory-ledger')}
+        >
+          查看库存流水
+        </Button>
+        <Button style={{ display: can('reconcile.read') ? undefined : 'none' }} onClick={reconcile}>
+          只读账本对账
+        </Button>
         <span role="status">{consistency}</span>
       </div>
-      <Row gutter={[20, 20]}>
+      <Row gutter={[20, 20]} style={{ display: can('inventory.read') ? undefined : 'none' }}>
         <Col xs={24} lg={12}>
-          <Card title="包装库存明细">
+          <Card
+            title="包装库存明细"
+            extra={<DataExportButton resource="inventory-packaging" module="inventory" />}
+          >
             <Table
               rowKey="id"
               columns={inventoryColumns}
@@ -113,7 +136,10 @@ export function DashboardPage({ navigate }: { navigate(path: string): void }) {
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title="蔬菜库存明细">
+          <Card
+            title="蔬菜库存明细"
+            extra={<DataExportButton resource="inventory-vegetables" module="inventory" />}
+          >
             <Table
               rowKey="id"
               columns={inventoryColumns}
@@ -125,10 +151,16 @@ export function DashboardPage({ navigate }: { navigate(path: string): void }) {
         </Col>
       </Row>
       <Card
+        style={{ display: can('reports.read') ? undefined : 'none' }}
         title="近期在外包装 · 当前页"
         className="section-card"
         extra={
-          <Button onClick={() => navigate('/admin/reports/external-packaging')}>查看全部</Button>
+          <Button
+            style={{ display: can('reports.read') ? undefined : 'none' }}
+            onClick={() => navigate('/admin/reports/external-packaging')}
+          >
+            查看全部
+          </Button>
         }
       >
         <ReportTable rows={outside} loading={loading} />

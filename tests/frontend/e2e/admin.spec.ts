@@ -16,7 +16,7 @@ test('深层管理路由可刷新；API 404 和非管理员权限仍由后台判
   const missing = await request.get('/api/no-such-api');
   expect(missing.status()).toBe(404);
   expect(missing.headers()['content-type']).toContain('application/json');
-  await page.getByLabel('管理员账号').fill('worker1');
+  await page.getByLabel('后台账号（管理员 / 会计）').fill('worker1');
   await page.getByLabel('密码', { exact: true }).fill(await testPassword());
   const denied = page.waitForResponse((response) =>
     response.url().endsWith('/api/auth/admin-login'),
@@ -64,6 +64,7 @@ test('新增员工不要求普通员工密码；角色与启用状态来自实�
     page.locator('.ant-empty-description').filter({ hasText: '暂无数据' }),
   ).toBeVisible();
   await page.goto('/admin/audit');
+  await page.getByRole('tab', { name: '业务变更明细' }).click();
   await expect(page.getByRole('cell', { name: '创建用户', exact: true })).toBeVisible();
 });
 test('提交已入库但两个响应丢失，刷新后使用原 key 确认且只入账一次', async ({ page, request }) => {

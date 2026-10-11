@@ -40,7 +40,15 @@ public sealed class ExcelService
         ["Difference"] = "产出/实收差异",
         ["Status"] = "单据状态",
         ["ReversalOf"] = "逆转原流水",
-        ["CreatedAt"] = "UTC创建时间"
+        ["CreatedAt"] = "UTC创建时间",
+        ["CreatorName"] = "创建人", ["Username"] = "账号", ["Phone"] = "手机号",
+        ["Enabled"] = "启用", ["Roles"] = "角色", ["Bound"] = "微信已绑定",
+        ["ItemId"] = "品类编号", ["GrowerId"] = "棚户编号", ["BatchId"] = "批次编号",
+        ["LineKind"] = "明细类型", ["Direction"] = "方向", ["LossReason"] = "损耗原因", ["DifferenceReason"] = "差异原因",
+        ["Contact"] = "联系人", ["ActorId"] = "操作者编号", ["ActorName"] = "操作者",
+        ["ActorRoles"] = "操作时角色", ["Action"] = "操作", ["Module"] = "模块", ["Method"] = "请求方式",
+        ["Path"] = "操作对象", ["QueryJson"] = "查询条件", ["RequestId"] = "请求编号", ["StatusCode"] = "HTTP结果",
+        ["State"] = "执行状态", ["ErrorCode"] = "错误代码", ["DurationMs"] = "耗时（毫秒）", ["CompletedAt"] = "UTC完成时间"
     };
     private static string SafeText(string value) => value.Length > 0 && "=+-@".Contains(value[0]) ? "'" + value : value;
     public byte[] Export(string name, List<Row> rows, PageQuery filter)

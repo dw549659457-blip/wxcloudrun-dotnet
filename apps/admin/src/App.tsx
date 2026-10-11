@@ -32,6 +32,12 @@ const ReportsPage = lazy(() =>
 const BindingsPage = lazy(() =>
   import('./pages/BindingsPage').then((module) => ({ default: module.BindingsPage })),
 );
+const PermissionsPage = lazy(() =>
+  import('./pages/PermissionsPage').then((module) => ({ default: module.PermissionsPage })),
+);
+const BatchesPage = lazy(() =>
+  import('./pages/BatchesPage').then((module) => ({ default: module.BatchesPage })),
+);
 const AuditPage = lazy(() =>
   import('./pages/AuditPage').then((module) => ({ default: module.AuditPage })),
 );
@@ -63,7 +69,47 @@ export function App() {
     setPath(next);
     window.scrollTo(0, 0);
   }
+  const isAdmin = auth.user?.roles.includes('ADMIN') ?? false;
+  function allowed(target: string): boolean {
+    if (
+      target.includes('/permissions') ||
+      target.includes('/bindings') ||
+      target.includes('/audit')
+    ) {
+      return isAdmin;
+    }
+    if (target.includes('/users')) {
+      return auth.can('users.read');
+    }
+    if (target === '/admin/stock') {
+      return auth.can('documents.create');
+    }
+    if (target.includes('/archives')) {
+      return auth.can('archives.read');
+    }
+    if (target.includes('/documents')) {
+      return auth.can('documents.read');
+    }
+    if (target.includes('/reports')) {
+      return auth.can('reports.read');
+    }
+    if (target.includes('/batches')) {
+      return auth.can('batches.read');
+    }
+    return auth.can('inventory.read') || auth.can('reports.read') || auth.can('reconcile.read');
+  }
   function content() {
+    if (!allowed(path)) {
+      return (
+        <Result status="403" title="当前账号没有此页面权限" subTitle="请联系管理员调整会计权限。" />
+      );
+    }
+    if (path === '/admin/permissions') {
+      return <PermissionsPage />;
+    }
+    if (path === '/admin/batches') {
+      return <BatchesPage />;
+    }
     if (path === '/admin/' || path === '/admin' || path === '/admin/dashboard') {
       return <DashboardPage navigate={navigate} />;
     }
@@ -114,7 +160,7 @@ export function App() {
       label: '员工与身份',
       children: [
         { key: '/admin/users', label: '员工与角色' },
-        { key: '/admin/bindings', label: '开通协助审批' },
+        ...(isAdmin ? [{ key: '/admin/bindings', label: '开通协助审批' }] : []),
       ],
     },
     {
@@ -133,8 +179,18 @@ export function App() {
         label,
       })),
     },
+    { key: '/admin/batches', label: '业务批次查询' },
+    { key: '/admin/permissions', label: '会计权限配置' },
     { key: '/admin/audit', label: '管理审计' },
-  ];
+  ].filter((item) => {
+    if (item.key === 'people') {
+      return auth.can('users.read') || isAdmin;
+    }
+    if (['archives', 'documents', 'reports'].includes(item.key)) {
+      return auth.can(`${item.key}.read`);
+    }
+    return allowed(item.key);
+  });
   return (
     <ConfigProvider
       locale={zhCN}
@@ -185,7 +241,7 @@ export function App() {
               <Button onClick={() => setCollapsed(!collapsed)}>菜单</Button>
               <div>
                 <b>{auth.user.name}</b>
-                <span className="muted"> · 管理员</span>
+                <span className="muted"> · {isAdmin ? '管理员' : '会计'}</span>
                 <Button
                   type="text"
                   onClick={() => {

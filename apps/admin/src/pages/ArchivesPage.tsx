@@ -7,10 +7,13 @@ import {
   type ArchiveInput,
   type ArchiveResource,
 } from '@warehouse/contracts';
+import { DataExportButton } from '../components/DataExportButton';
+import { useAuth } from '../hooks/useAuth';
 import { api } from '../api/client';
 import { ErrorNotice, PageControls, PageHeading } from '../components/Common';
 import { usePagedQuery } from '../hooks/usePagedQuery';
 export function ArchivesPage({ resource }: { resource: ArchiveResource }) {
+  const { can } = useAuth();
   const [search, setSearch] = useState('');
   const data = usePagedQuery<Archive>(`/api/${resource}`, { search: search || undefined });
   const [editing, setEditing] = useState<Archive | 'new' | null>(null);
@@ -59,9 +62,18 @@ export function ArchivesPage({ resource }: { resource: ArchiveResource }) {
         title={`${archiveLabels[resource]}档案`}
         description="维护名称、规格和启用状态。历史单据保留快照，已使用品类不能更改单位。"
         extra={
-          <Button type="primary" onClick={() => open('new')}>
-            新增{archiveLabels[resource]}
-          </Button>
+          <Space>
+            <DataExportButton
+              resource={resource}
+              module="archives"
+              filters={{ search: search || undefined }}
+            />
+            {can('archives.write') && (
+              <Button type="primary" onClick={() => open('new')}>
+                新增{archiveLabels[resource]}
+              </Button>
+            )}
+          </Space>
         }
       />
       <ErrorNotice message={data.error} />
@@ -90,7 +102,11 @@ export function ArchivesPage({ resource }: { resource: ArchiveResource }) {
               <Tag color={item.enabled ? 'green' : 'default'}>{item.enabled ? '启用' : '停用'}</Tag>
             ),
           },
-          { title: '操作', render: (_, item) => <Button onClick={() => open(item)}>编辑</Button> },
+          {
+            title: '操作',
+            render: (_, item) =>
+              can('archives.write') ? <Button onClick={() => open(item)}>编辑</Button> : '仅查询',
+          },
         ]}
       />
       <PageControls

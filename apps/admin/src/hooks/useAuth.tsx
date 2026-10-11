@@ -7,6 +7,7 @@ interface AuthState {
   loading: boolean;
   login(username: string, password: string): Promise<void>;
   logout(): Promise<void>;
+  can(permission: string): boolean;
 }
 const AuthContext = createContext<AuthState | null>(null);
 function clearPrivateBrowserState(): void {
@@ -26,7 +27,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         if (hasCsrfToken()) {
           const identity = await api.request<Identity>('GET', '/api/auth/me');
-          if (active && identity.sessionType === 'WEB_ADMIN' && identity.roles.includes('ADMIN')) {
+          if (
+            active &&
+            identity.sessionType === 'WEB_ADMIN' &&
+            identity.roles.some((role) => ['ADMIN', 'ACCOUNTANT'].includes(role))
+          ) {
             setUser(identity);
           }
         }
@@ -42,14 +47,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
     void restoreSession();
+    async function refreshPermissions() {
+      if (!hasCsrfToken()) {
+        return;
+      }
+      try {
+        const identity = await api.request<Identity>('GET', '/api/auth/me');
+        if (
+          active &&
+          identity.sessionType === 'WEB_ADMIN' &&
+          identity.roles.some((role) => ['ADMIN', 'ACCOUNTANT'].includes(role))
+        ) {
+          setUser(identity);
+        }
+      } catch {
+        /* 会话失效由统一 401 事件处理；网络失败保留当前页面。 */
+      }
+    }
     function expired() {
       setCsrfToken('');
       setUser(null);
     }
     window.addEventListener('warehouse:unauthorized', expired);
+    window.addEventListener('focus', refreshPermissions);
+    window.addEventListener('warehouse:permissions-changed', refreshPermissions);
     return () => {
       active = false;
       window.removeEventListener('warehouse:unauthorized', expired);
+      window.removeEventListener('focus', refreshPermissions);
+      window.removeEventListener('warehouse:permissions-changed', refreshPermissions);
     };
   }, []);
   async function login(username: string, password: string) {
@@ -68,7 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: result.name,
       roles: result.roles,
       sessionType: 'WEB_ADMIN',
-      selectedRole: 'ADMIN',
+      selectedRole: result.roles.includes('ADMIN') ? 'ADMIN' : 'ACCOUNTANT',
+      permissions: result.permissions,
     });
   }
   async function logout() {
@@ -79,7 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
     }
   }
-  return <AuthContext value={{ user, loading, login, logout }}>{children}</AuthContext>;
+  function can(permission: string): boolean {
+    return Boolean(user?.roles.includes('ADMIN') || user?.permissions?.includes(permission));
+  }
+  return <AuthContext value={{ user, loading, login, logout, can }}>{children}</AuthContext>;
 }
 export function useAuth(): AuthState {
   const context = useContext(AuthContext);

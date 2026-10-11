@@ -73,3 +73,7 @@ Docker新增Node24.19.0/pnpm11.25.0管理前端构建阶段，npm锁定安装并
 回滚：选择保留的旧应用版本，确认环境变量和端口与该版本一致；数据库不自动回滚，恢复数据必须先在隔离库验证，再按受控故障处理方案操作生产。
 
 容器启动Coredump的已复现原因、修复与日志获取步骤见[deployment-startup-troubleshooting.md](deployment-startup-troubleshooting.md)。
+
+## 已有数据库升级到会计权限与操作审计版本
+
+先执行 [wechat-cloudrun-upgrade-005.sql](../database/wechat-cloudrun-upgrade-005.sql)，再发布新版本；保留现有 admin、账号、库存和业务记录。不要用首次初始化 SQL 覆盖已有业务库。升级后由管理员在后台创建会计账号，并在“会计权限配置”和“管理审计”操作。详情见 [后台权限升级说明](backoffice-permissions-audit.md)。

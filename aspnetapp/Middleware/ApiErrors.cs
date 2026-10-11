@@ -5,6 +5,10 @@ namespace aspnetapp.Middleware;
 
 public sealed class ApiErrors(RequestDelegate next, ILogger<ApiErrors> logger)
 {
+    public static int Status(Exception error) => error is BusinessException business ? business.Status
+        : error is MySqlException { Number: 1062 } ? 409
+        : error is MySqlException { Number: 1042 or 1045 or 2002 or 2006 } ? 503
+        : error is BadHttpRequestException or System.Text.Json.JsonException ? 400 : 500;
     public async Task Invoke(HttpContext context)
     {
         context.TraceIdentifier = Guid.NewGuid().ToString("N");
@@ -24,7 +28,7 @@ public sealed class ApiErrors(RequestDelegate next, ILogger<ApiErrors> logger)
             var duplicate = error is MySqlException { Number: 1062 };
             var unavailable = error is MySqlException { Number: 1042 or 1045 or 2002 or 2006 };
             var invalid = error is BadHttpRequestException or System.Text.Json.JsonException;
-            context.Response.StatusCode = business?.Status ?? (duplicate ? 409 : unavailable ? 503 : invalid ? 400 : 500);
+            context.Response.StatusCode = Status(error);
             // 不输出异常全文/SQL/连接字符串/微信请求 URI，防止凭据进入日志。
             if (business is null && !duplicate && !invalid)
             {

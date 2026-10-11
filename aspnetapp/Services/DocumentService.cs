@@ -8,8 +8,15 @@ namespace aspnetapp.Services;
 /// <summary>业务单据生命周期；库存入账仅发生在 POSTED，草稿不影响任何余额。</summary>
 public sealed class DocumentService(TransactionService transactions, DocumentRepository documents, InventoryRepository inventory)
 {
-    public static void Authorize(Actor actor, string kind)
+    public static void Authorize(Actor actor, string kind, string action = "read")
     {
+        if (kind is not (DocumentKinds.Dispatch or DocumentKinds.Recovery or DocumentKinds.Work or DocumentKinds.Outbound or DocumentKinds.Stock))
+            throw new BusinessException(404, "NOT_FOUND", "未知单据类型");
+        if (actor.IsBackOffice)
+        {
+            actor.RequirePermission("documents." + action);
+            return;
+        }
         switch (kind)
         {
             case DocumentKinds.Dispatch: case DocumentKinds.Recovery: actor.Require(Roles.Driver); break;
@@ -19,10 +26,10 @@ public sealed class DocumentService(TransactionService transactions, DocumentRep
             default: throw new BusinessException(404, "NOT_FOUND", "未知单据类型");
         }
     }
-    public static void Own(Actor actor, DocumentRecord document)
+    public static void Own(Actor actor, DocumentRecord document, string action = "read")
     {
-        Authorize(actor, document.Kind);
-        if (!actor.IsAdmin && actor.Id != document.CreatorId)
+        Authorize(actor, document.Kind, action);
+        if (!actor.IsBackOffice && actor.Id != document.CreatorId)
         {
             throw new BusinessException(404, "NOT_FOUND", "未找到单据");
         }
@@ -124,11 +131,13 @@ public sealed class DocumentService(TransactionService transactions, DocumentRep
     }
     public Task<SubmissionResult> Create(Actor actor, string kind, DraftInput request, string key, string requestId)
     {
-        Authorize(actor, kind);
+        Authorize(actor, kind, "create");
+        if (request.Post) Authorize(actor, kind, "post");
         Validate(request.Document, kind);
         return transactions.Idempotent(actor, $"{kind}:create", key, request, async (connection, transaction) =>
         {
             var document = await documents.Create(connection, transaction, kind, actor.Id, request.Document);
+            await documents.Audit(connection, transaction, actor, "CREATE_DRAFT", kind, document.Id, null, request.Document, "", requestId);
             if (request.Post)
             {
                 return await PostCore(connection, transaction, actor, document, requestId);
@@ -137,26 +146,30 @@ public sealed class DocumentService(TransactionService transactions, DocumentRep
             return new(document.Id, document.Number, document.Status, document.Version);
         });
     }
-    public Task<SubmissionResult> Post(Actor actor, long id, string kind, int version, string key, string requestId) => transactions.Idempotent(actor, $"{kind}:{id}:post", key, new { version }, async (connection, transaction) =>
+    public Task<SubmissionResult> Post(Actor actor, long id, string kind, int version, string key, string requestId)
+    {
+        Authorize(actor, kind, "post");
+        return transactions.Idempotent(actor, $"{kind}:{id}:post", key, new { version }, async (connection, transaction) =>
+        {
+            var document = await documents.Get(connection, transaction, id, true);
+            Own(actor, document, "post");
+            if (document.Kind != kind)
+            {
+                throw new BusinessException(404, "NOT_FOUND", "未找到单据");
+            }
+
+            if (document.Version != version)
+            {
+                throw BusinessException.Conflict("VERSION_CONFLICT", "草稿已改变，请刷新确认");
+            }
+
+            return await PostCore(connection, transaction, actor, document, requestId);
+        });
+    }
+    public Task<SubmissionResult> Edit(Actor actor, long id, string kind, int version, DocumentInput input, string requestId = "") => transactions.Run(async (connection, transaction) =>
     {
         var document = await documents.Get(connection, transaction, id, true);
-        Own(actor, document);
-        if (document.Kind != kind)
-        {
-            throw new BusinessException(404, "NOT_FOUND", "未找到单据");
-        }
-
-        if (document.Version != version)
-        {
-            throw BusinessException.Conflict("VERSION_CONFLICT", "草稿已改变，请刷新确认");
-        }
-
-        return await PostCore(connection, transaction, actor, document, requestId);
-    });
-    public Task<SubmissionResult> Edit(Actor actor, long id, string kind, int version, DocumentInput input) => transactions.Run(async (connection, transaction) =>
-    {
-        var document = await documents.Get(connection, transaction, id, true);
-        Own(actor, document);
+        Own(actor, document, "edit");
         if (document.Kind != kind)
         {
             throw new BusinessException(404, "NOT_FOUND", "未找到单据");
@@ -174,12 +187,13 @@ public sealed class DocumentService(TransactionService transactions, DocumentRep
         }
 
         await Database.Execute(connection, transaction, "UPDATE Documents SET Payload=@payload,BusinessDate=@date,Version=Version+1 WHERE Id=@id", [("payload", JsonSettings.Serialize(input)), ("date", input.BusinessDate.ToString("yyyy-MM-dd")), ("id", id)]);
+        await documents.Audit(connection, transaction, actor, "EDIT_DRAFT", kind, id, document.Input, input, "", requestId);
         return new SubmissionResult(id, document.Number, DocumentStatuses.Draft, version + 1);
     });
-    public Task Delete(Actor actor, long id, string kind) => transactions.Run(async (connection, transaction) =>
+    public Task Delete(Actor actor, long id, string kind, string requestId = "") => transactions.Run(async (connection, transaction) =>
     {
         var document = await documents.Get(connection, transaction, id, true);
-        Own(actor, document);
+        Own(actor, document, "delete");
         if (document.Kind != kind)
         {
             throw new BusinessException(404, "NOT_FOUND", "未找到单据");
@@ -189,6 +203,7 @@ public sealed class DocumentService(TransactionService transactions, DocumentRep
         {
             throw BusinessException.Conflict("POSTED_IMMUTABLE", "只能删除草稿");
         }
+        await documents.Audit(connection, transaction, actor, "DELETE_DRAFT", kind, id, document.Input, new { status = DocumentStatuses.Reversed }, "", requestId);
         // 保留单号和幂等查询结果，将草稿标记冲销，不硬删除历史头表。
         await Database.Execute(connection, transaction, "UPDATE Documents SET Status='REVERSED',Version=Version+1 WHERE Id=@id", [("id", id)]);
         return true;
@@ -363,7 +378,7 @@ public sealed class DocumentService(TransactionService transactions, DocumentRep
     }
     public Task<SubmissionResult> Reverse(Actor actor, string kind, long id, string reason, string key, string requestId)
     {
-        actor.Require(Roles.Admin);
+        actor.RequirePermission("documents.reverse");
         ValidateReason(reason);
         return transactions.Idempotent(actor, $"{kind}:{id}:reverse", key, new { reason }, async (connection, transaction) =>
         {
@@ -379,7 +394,7 @@ public sealed class DocumentService(TransactionService transactions, DocumentRep
     }
     public Task<SubmissionResult> Correct(Actor actor, string kind, long id, CorrectInput request, string key, string requestId)
     {
-        actor.Require(Roles.Admin);
+        actor.RequirePermission("documents.correct");
         ValidateReason(request.Reason);
         Validate(request.Document, kind);
         return transactions.Idempotent(actor, $"{kind}:{id}:correct", key, request, async (connection, transaction) =>

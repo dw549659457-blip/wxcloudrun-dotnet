@@ -99,3 +99,7 @@ Excel MIME为application/vnd.openxmlformats-officedocument.spreadsheetml.sheet�
 单据列表/详情的 document 增加 creatorName、createdAt、postedAt 和 customerName；前两者是记录人名称快照与UTC创建时间，postedAt未提交时为null。详情 context 给出所属批次棚户/司机名称，DocumentItems包含棚户快照。员工自己的已关闭作业详情仍可查看必要名称，不因此授予全局批次余额权限。客户和单位使用后台原有快照。
 
 Web页面由 `/admin/` 提供，只有该前缀使用SPA fallback；未知 `/api/...` 保持JSON404。构建资源见 frontend-setup.md。共享前端类型在 `packages/contracts/src/types.ts`，数量字符串与实际/展示数量仍采用原 API 口径。
+
+## 后台会计权限与操作审计
+
+管理员及会计都使用 `admin-login` 和 Cookie/CSRF；登录和 `me` 返回有效 `permissions`。会计默认可查询、导出全部业务数据和报表，其他业务操作由管理员配置。账号/角色管理、绑定审批、权限配置和审计仍仅限管理员。`GET/PUT /api/backoffice-permissions` 管理会计角色配置；`GET /api/exports/{resource}` 扩展档案、员工、库存、批次及单据导出。`GET /api/backoffice-operation-logs` 与 `/excel` 为管理员操作记录查询/导出，支持角色、操作者、操作、模块、日期、状态和请求 ID。`audit-logs?requestId=...` 查询同一请求的变更前后明细。完整权限键、筛选、升级顺序见 [会计权限和审计说明](backoffice-permissions-audit.md)。

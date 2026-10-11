@@ -31,7 +31,7 @@ bash scripts/dev.sh run
 
 开发账号：admin、driver1、driver2、worker1、worker2、outbound1，密码均为你设置的 `DEV_SEED_PASSWORD`。种子不覆盖既有账号密码、不初始化库存，重复运行只补充缺失档案。开发登录使用 `POST /api/auth/dev-login`，登录响应令牌仅作本地验收；`Production`、`Staging` 等非 Development 环境拒绝开发登录开关。
 
-开发管理端用另一个终端运行 `pnpm dev:admin`，访问 `http://localhost:5173/admin/`；默认代理后台8080，使用管理员账号密码登录。`pnpm build:admin` 后，后台地址的 `/admin/` 也可直接访问。小程序先填写真实 AppID 和 `src/config/local.ts` 的 envId，再运行 `pnpm build:miniprogram` 并导入 `apps/miniprogram`。
+开发管理端用另一个终端运行 `pnpm dev:admin`，访问 `http://localhost:5173/admin/`；默认代理后台8080，使用管理员或会计账号密码登录。`pnpm build:admin` 后，后台地址的 `/admin/` 也可直接访问。小程序先填写真实 AppID 和 `src/config/local.ts` 的 envId，再运行 `pnpm build:miniprogram` 并导入 `apps/miniprogram`。
 
 本地运行端口由 `.env.local` 的 `PORT=8080` 指定。用本地 HTTP 请求检查 `/health/live`、`/health/ready`。开发模式 `/swagger/` 提供 OpenAPI；生产关闭 Swagger，固定接口契约见 [docs/openapi.json](docs/openapi.json) 和 [docs/api.md](docs/api.md)。
 
@@ -57,7 +57,8 @@ docker compose up -d mysql
 
 ## 3. 主要能力
 
-- 内部预注册员工与多角色：管理员 Cookie/CSRF、小程序数据库哈希令牌、账号停用/角色变更撤销会话。
+- 内部预注册员工与多角色：管理员、会计 Cookie/CSRF，小程序数据库哈希令牌，账号停用/角色变更撤销会话。
+- 会计默认全量查询及导出，业务写操作由管理员配置；后台查询、导出、修改、删除及拒绝操作全部留痕。升级与操作见 [会计权限和审计说明](docs/backoffice-permissions-audit.md)。
 - 微信 code2Session 验证、手机号换取、本人确认、管理员协助审批、解绑审计；不信任客户端身份头和角色。
 - 档案启停、历史快照；包装/蔬菜期初、补充、外来菜、库存调整流水。
 - 多棚户多包装下发、多人装菜、部分回收、最终回收、实收与产出差异、包装损耗。

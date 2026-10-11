@@ -21,7 +21,7 @@ public sealed class AdditionalTests(TestFixture fixture) : IClassFixture<TestFix
         await initialization.CreateDatabase();
         var after = (await aspnetapp.Infrastructure.Database.Query(connection, null, "SELECT COUNT(*) AS Total FROM Users"))[0].Id("Total");
         Assert.Equal(before, after);
-        Assert.Equal(4, (await aspnetapp.Infrastructure.Database.Query(connection, null, "SELECT COUNT(*) AS Total FROM SchemaMigrations"))[0].Id("Total"));
+        Assert.Equal(5, (await aspnetapp.Infrastructure.Database.Query(connection, null, "SELECT COUNT(*) AS Total FROM SchemaMigrations"))[0].Id("Total"));
     }
     [Fact]
     public async Task Database_preparation_rejects_system_example_and_unsafe_names_before_any_database_write()

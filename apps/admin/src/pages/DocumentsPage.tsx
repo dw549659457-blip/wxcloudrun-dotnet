@@ -13,6 +13,8 @@ import {
   type DocumentResource,
   type PageQuery,
 } from '@warehouse/contracts';
+import { DataExportButton } from '../components/DataExportButton';
+import { useAuth } from '../hooks/useAuth';
 import { api } from '../api/client';
 import { DocumentSummary } from '../components/DocumentSummary';
 import { DocumentEditor } from '../components/DocumentEditor';
@@ -61,6 +63,7 @@ function DependencyNotice({ error }: { error: unknown }) {
   );
 }
 export function DocumentsPage({ resource }: { resource: DocumentResource }) {
+  const { can } = useAuth();
   const [filters, setFilters] = useState<PageQuery>({});
   const data = usePagedQuery<DocumentRecord>(`/api/${resource}`, filters);
   const [detail, setDetail] = useState<DocumentDetail | null>(null);
@@ -179,15 +182,20 @@ export function DocumentsPage({ resource }: { resource: DocumentResource }) {
         title={`${documentLabels[resource]}单据`}
         description="查看全部业务单据。草稿尚未入账；已提交单据通过冲销或原子重建更正并保留历史。"
         extra={
-          <Button
-            type="primary"
-            onClick={() => {
-              setDetail(null);
-              openAction('new');
-            }}
-          >
-            新建{documentLabels[resource]}
-          </Button>
+          <Space>
+            <DataExportButton resource={resource} module="documents" filters={filters} />
+            {can('documents.create') && (
+              <Button
+                type="primary"
+                onClick={() => {
+                  setDetail(null);
+                  openAction('new');
+                }}
+              >
+                新建{documentLabels[resource]}
+              </Button>
+            )}
+          </Space>
         }
       />
       <div className="filter-bar">
@@ -319,10 +327,36 @@ export function DocumentsPage({ resource }: { resource: DocumentResource }) {
         <Space wrap className="section-card">
           {detail?.document.status === 'DRAFT' && (
             <>
-              <Button type="primary" onClick={() => openAction('edit')}>
+              {can('documents.post') && (
+                <Button
+                  onClick={() => {
+                    if (!detail) {
+                      return;
+                    }
+                    Modal.confirm({
+                      title: '确认提交原草稿？',
+                      content: '按当前草稿内容提交入账。',
+                      onOk: () =>
+                        submission.submit(
+                          `${resourceKinds[resource]}:${detail.document.id}:post`,
+                          `/api/${resource}/${detail.document.id}/post`,
+                          { version: detail.document.version },
+                        ),
+                    });
+                  }}
+                >
+                  提交原草稿
+                </Button>
+              )}
+              <Button
+                style={{ display: can('documents.edit') ? undefined : 'none' }}
+                type="primary"
+                onClick={() => openAction('edit')}
+              >
                 编辑草稿 / 提交
               </Button>
               <Button
+                style={{ display: can('documents.delete') ? undefined : 'none' }}
                 danger
                 onClick={() =>
                   Modal.confirm({
@@ -338,8 +372,17 @@ export function DocumentsPage({ resource }: { resource: DocumentResource }) {
           )}
           {detail?.document.status === 'POSTED' && (
             <>
-              <Button onClick={() => openAction('correct')}>冲销并重建修正</Button>
-              <Button danger onClick={() => openAction('reverse')}>
+              <Button
+                style={{ display: can('documents.correct') ? undefined : 'none' }}
+                onClick={() => openAction('correct')}
+              >
+                冲销并重建修正
+              </Button>
+              <Button
+                style={{ display: can('documents.reverse') ? undefined : 'none' }}
+                danger
+                onClick={() => openAction('reverse')}
+              >
                 冲销原单
               </Button>
             </>
@@ -398,6 +441,7 @@ export function DocumentsPage({ resource }: { resource: DocumentResource }) {
             resource={resource}
             initial={action === 'new' ? undefined : detail?.document.input}
             correction={action === 'correct'}
+            submitDisabled={action !== 'correct' && !can('documents.post')}
             disabled={submission.pending || submission.loading}
             onSubmit={(document) => {
               if (action === 'correct' && !reason.trim()) {

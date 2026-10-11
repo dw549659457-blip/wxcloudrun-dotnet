@@ -29,6 +29,8 @@ try
     builder.Services.AddSingleton<DocumentService>();
     builder.Services.AddSingleton<AuthService>();
     builder.Services.AddSingleton<ArchiveService>();
+    builder.Services.AddSingleton<PermissionService>();
+    builder.Services.AddSingleton<OperationAuditService>();
     builder.Services.AddSingleton<ExcelService>();
     builder.Services.AddSingleton<MigrationRunner>();
     builder.Services.AddSingleton<Initialization>();
@@ -114,6 +116,7 @@ try
         app.MapFallbackToFile("/admin/{*path:nonfile}", "index.html", new StaticFileOptions { FileProvider = adminFiles });
     }
     app.UseRouting();
+    app.UseMiddleware<BackOfficeAudit>();
     app.UseRequestTimeouts();
     app.MapControllers().WithRequestTimeout("default");
     app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));

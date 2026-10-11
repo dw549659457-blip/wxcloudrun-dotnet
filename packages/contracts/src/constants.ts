@@ -1,6 +1,7 @@
 import type { ArchiveResource, DocumentResource, ReportName, Role } from './types';
 export const roleLabels: Record<Role, string> = {
   ADMIN: '管理员',
+  ACCOUNTANT: '会计',
   DRIVER: '司机',
   WORKER: '装菜人员',
   OUTBOUND: '出库员',

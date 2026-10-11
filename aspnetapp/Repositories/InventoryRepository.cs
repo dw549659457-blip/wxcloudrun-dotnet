@@ -68,7 +68,7 @@ public sealed class InventoryRepository
         }
 
         var batch = rows[0];
-        if (!worker && !actor.IsAdmin && batch.Id("DriverId") != actor.Id)
+        if (!worker && !actor.IsBackOffice && batch.Id("DriverId") != actor.Id)
         {
             throw new BusinessException(404, "NOT_FOUND", "未找到作业批次");
         }

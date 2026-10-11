@@ -20,7 +20,7 @@ public sealed class ReportRepository(Database database, AppSettings? settings = 
     };
     public async Task<List<Row>> Rows(Actor actor, string name, PageQuery query, bool export = false)
     {
-        actor.Require(Roles.Admin); QueryRepository.Validate(query);
+        actor.RequirePermission(export ? "reports.export" : "reports.read"); QueryRepository.Validate(query);
         var sql = Sql(name);
         var itemAlias = name is "external-packaging" or "monthly-loss" ? "p.ItemId" : name == "vegetable-differences" ? "v.ItemId" : "l.ItemId";
         sql += " AND (@from IS NULL OR d.BusinessDate>=@from) AND (@to IS NULL OR d.BusinessDate<=@to) AND (@item IS NULL OR " + itemAlias + "=@item) AND (@grower IS NULL OR b.GrowerId=@grower)";

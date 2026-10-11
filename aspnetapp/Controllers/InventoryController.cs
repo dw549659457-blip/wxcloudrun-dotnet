@@ -37,7 +37,7 @@ public sealed class InventoryController(AuthService authentication, QueryReposit
         return File(excel.Export(name, rows, query), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"{name}-{DateTime.UtcNow:yyyyMMdd}.xlsx");
     }
     [HttpGet("admin/reconcile")]
-    public async Task<object> Reconcile() { (await Current()).Require(Roles.Admin); var errors = await reports.Reconcile(); return new { consistent = errors.Count == 0, errors }; }
+    public async Task<object> Reconcile() { (await Current()).RequirePermission("reconcile.read"); var errors = await reports.Reconcile(); return new { consistent = errors.Count == 0, errors }; }
     [HttpPost("admin/documents/{type}/{id:long}/reverse")]
     public async Task<SubmissionResult> Reverse(string type, long id, ReverseInput input) => await documents.Reverse(await Current(), DocumentsController.Kind(type), id, input.Reason, Key, RequestId);
     [HttpPost("admin/documents/{type}/{id:long}/correct")]

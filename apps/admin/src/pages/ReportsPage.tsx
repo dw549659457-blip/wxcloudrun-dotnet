@@ -12,10 +12,12 @@ import {
   type ReportRow,
   type UserRecord,
 } from '@warehouse/contracts';
+import { useAuth } from '../hooks/useAuth';
 import { allPages, downloadReport } from '../api/client';
 import { ErrorNotice, PageControls, PageHeading, ReportTable } from '../components/Common';
 import { usePagedQuery } from '../hooks/usePagedQuery';
 export function ReportsPage({ name }: { name: ReportName }) {
+  const { can } = useAuth();
   const [filters, setFilters] = useState<PageQuery>({});
   const data = usePagedQuery<ReportRow>(`/api/reports/${name}`, filters);
   const [archives, setArchives] = useState<Archive[]>([]);
@@ -27,10 +29,10 @@ export function ReportsPage({ name }: { name: ReportName }) {
     async function load() {
       try {
         const [packaging, vegetables, growerRows, users] = await Promise.all([
-          allPages<Archive>('/api/packaging-types'),
-          allPages<Archive>('/api/vegetable-types'),
-          allPages<Archive>('/api/growers'),
-          allPages<UserRecord>('/api/users'),
+          can('archives.read') ? allPages<Archive>('/api/packaging-types') : Promise.resolve([]),
+          can('archives.read') ? allPages<Archive>('/api/vegetable-types') : Promise.resolve([]),
+          can('archives.read') ? allPages<Archive>('/api/growers') : Promise.resolve([]),
+          can('users.read') ? allPages<UserRecord>('/api/users') : Promise.resolve([]),
         ]);
         setArchives([...packaging, ...vegetables]);
         setGrowers(growerRows);
@@ -76,7 +78,12 @@ export function ReportsPage({ name }: { name: ReportName }) {
                 : '只统计有效业务效果，按业务日期筛选。Excel导出包括全部筛选结果，不仅当前页。'
         }
         extra={
-          <Button type="primary" loading={exporting} onClick={exportExcel}>
+          <Button
+            style={{ display: can('reports.export') ? undefined : 'none' }}
+            type="primary"
+            loading={exporting}
+            onClick={exportExcel}
+          >
             导出全部筛选结果 Excel
           </Button>
         }

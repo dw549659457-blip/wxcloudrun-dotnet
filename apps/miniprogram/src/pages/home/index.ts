@@ -28,7 +28,18 @@ Page({
       if (!session) {
         return;
       }
-      const roles = session.roles.filter((role) => role !== 'ADMIN');
+      const roles = session.roles.filter((role) => ['DRIVER', 'WORKER', 'OUTBOUND'].includes(role));
+      if (roles.length === 0) {
+        this.setData({
+          name: session.name,
+          roles: [],
+          role: '',
+          roleName: '',
+          selecting: false,
+          error: '当前账号为后台账号，请使用管理后台；小程序需要司机、装菜人员或出库员岗位。',
+        });
+        return;
+      }
       const selected = roles.some((role) => role === session.selectedRole)
         ? session.selectedRole
         : roles.length === 1

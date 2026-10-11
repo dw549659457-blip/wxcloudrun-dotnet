@@ -7,7 +7,7 @@ using MySqlConnector;
 
 namespace aspnetapp.Services;
 
-public sealed record SessionResult(long UserId, string Name, string[] Roles, string Token, string? CsrfToken, string? SelectedRole = null);
+public sealed record SessionResult(long UserId, string Name, string[] Roles, string Token, string? CsrfToken, string? SelectedRole = null, string[]? Permissions = null, string Username = "");
 
 public sealed class AuthService(Database database, TransactionService transactions, DocumentRepository audit, IWechatGateway wechat, AppSettings settings)
 {
@@ -26,7 +26,8 @@ public sealed class AuthService(Database database, TransactionService transactio
         var selectedRole = preferredRole is not null && roles.Contains(preferredRole) ? preferredRole : roles.FirstOrDefault();
         await Database.Execute(connection, transaction, "INSERT INTO Sessions(TokenHash,UserId,SessionType,CsrfHash,SelectedRole,ExpiresAt) VALUES(@hash,@user,@type,@csrf,@selected,@expiry)",
             [("hash", TransactionService.Hash(token)), ("user", user.Id("Id")), ("type", type), ("selected", selectedRole), ("csrf", csrf is null ? null : TransactionService.Hash(csrf)), ("expiry", DateTime.UtcNow.AddHours(type == SessionTypes.WebAdmin ? 8 : 168))]);
-        return new(user.Id("Id"), user.Text("Name"), roles, token, csrf, selectedRole);
+        return new(user.Id("Id"), user.Text("Name"), roles, token, csrf, selectedRole,
+            type == SessionTypes.WebAdmin ? await PermissionService.Effective(connection, transaction, roles) : [], user.Text("Username"));
     }
     public async Task<SessionResult> Login(LoginInput input, string address, bool development)
     {
@@ -66,7 +67,7 @@ public sealed class AuthService(Database database, TransactionService transactio
         }
 
         var roles = await UserRoles(lookup, null, users[0].Id("Id"));
-        if (!development && !roles.Contains(Roles.Admin))
+        if (!development && !Roles.BackOffice(roles))
         {
             throw new BusinessException(403, "FORBIDDEN", "该账号不能登录管理后台");
         }
@@ -85,6 +86,7 @@ public sealed class AuthService(Database database, TransactionService transactio
     }
     public async Task<Actor> Authenticate(HttpContext context)
     {
+        if (context.Items["AuthenticatedActor"] is Actor authenticated) return authenticated;
         var authorization = context.Request.Headers.Authorization.ToString();
         var bearer = authorization.StartsWith("Bearer ", StringComparison.Ordinal) ? authorization[7..] : null;
         var cookie = context.Request.Cookies["warehouse_session"];
@@ -96,7 +98,7 @@ public sealed class AuthService(Database database, TransactionService transactio
 
         await using var connection = await database.Open();
         var tokenHash = TransactionService.Hash(token);
-        var rows = await Database.Query(connection, null, "SELECT s.*,u.Name,u.Enabled FROM Sessions s JOIN Users u ON u.Id=s.UserId WHERE s.TokenHash=@hash AND s.ExpiresAt>UTC_TIMESTAMP(6) AND s.RevokedAt IS NULL", ("hash", tokenHash));
+        var rows = await Database.Query(connection, null, "SELECT s.*,u.Username,u.Name,u.Enabled FROM Sessions s JOIN Users u ON u.Id=s.UserId WHERE s.TokenHash=@hash AND s.ExpiresAt>UTC_TIMESTAMP(6) AND s.RevokedAt IS NULL", ("hash", tokenHash));
         if (rows.Count == 0 || !rows[0].Flag("Enabled"))
         {
             throw new BusinessException(401, "SESSION_EXPIRED", "登录已过期，请重新进入");
@@ -104,11 +106,16 @@ public sealed class AuthService(Database database, TransactionService transactio
 
         var session = rows[0];
         var roles = await UserRoles(connection, null, session.Id("UserId"));
+        var selectedRole = session.IsNull("SelectedRole") ? roles.FirstOrDefault() : session.Text("SelectedRole");
+        if (selectedRole is not null && !roles.Contains(selectedRole)) selectedRole = roles.FirstOrDefault();
+        var actor = new Actor(session.Id("UserId"), session.Text("Name"), roles, session.Text("SessionType"), tokenHash, selectedRole,
+            session.Text("SessionType") == SessionTypes.WebAdmin ? await PermissionService.Effective(connection, null, roles) : [], session.Text("Username"));
+        context.Items["AuditActor"] = actor;
         if (session.Text("SessionType") == SessionTypes.WebAdmin)
         {
-            if (bearer is not null || !roles.Contains(Roles.Admin))
+            if (bearer is not null || !Roles.BackOffice(roles))
             {
-                throw new BusinessException(401, "SESSION_INVALID", "请使用管理员网页登录");
+                throw new BusinessException(401, "SESSION_INVALID", "请使用后台网页登录");
             }
 
             if (context.Request.Method is not ("GET" or "HEAD" or "OPTIONS"))
@@ -130,13 +137,8 @@ public sealed class AuthService(Database database, TransactionService transactio
             throw new BusinessException(401, "SESSION_INVALID", "员工会话需要 Bearer 令牌");
         }
 
-        var selectedRole = session.IsNull("SelectedRole") ? roles.FirstOrDefault() : session.Text("SelectedRole");
-        if (selectedRole is not null && !roles.Contains(selectedRole))
-        {
-            selectedRole = roles.FirstOrDefault();
-        }
-
-        return new(session.Id("UserId"), session.Text("Name"), roles, session.Text("SessionType"), tokenHash, selectedRole);
+        context.Items["AuthenticatedActor"] = actor;
+        return actor;
     }
     public Task SelectRole(Actor actor, string role) => transactions.Run(async (connection, transaction) =>
     {

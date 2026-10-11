@@ -52,6 +52,9 @@ export const api: ApiTransport = {
         if (response.status === 401 && !path.endsWith('/admin-login')) {
           window.dispatchEvent(new Event('warehouse:unauthorized'));
         }
+        if (response.status === 403 && isApiFailure(data) && data.code === 'FORBIDDEN') {
+          window.dispatchEvent(new Event('warehouse:permissions-changed'));
+        }
         throw new ApiError(
           response.status,
           isApiFailure(data)

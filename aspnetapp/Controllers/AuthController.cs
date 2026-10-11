@@ -14,8 +14,11 @@ public sealed class AuthController(AuthService authentication, AppSettings setti
     public async Task<object> AdminLogin(LoginInput input)
     {
         var session = await Authentication.Login(input, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown", false);
+        var actor = new Actor(session.UserId, session.Name, session.Roles, SessionTypes.WebAdmin, "", session.SelectedRole, session.Permissions, session.Username);
+        HttpContext.Items["AuditActor"] = actor;
+        HttpContext.Items["OperationLogId"] = await HttpContext.RequestServices.GetRequiredService<OperationAuditService>().Start(HttpContext, actor);
         Response.Cookies.Append("warehouse_session", session.Token, new CookieOptions { HttpOnly = true, Secure = settings.Production, SameSite = SameSiteMode.Strict, Path = "/", MaxAge = TimeSpan.FromHours(8) });
-        return new { session.UserId, session.Name, session.Roles, session.CsrfToken };
+        return new { session.UserId, session.Name, session.Roles, session.CsrfToken, session.Permissions };
     }
     [HttpPost("dev-login")]
     public Task<SessionResult> DevelopmentLogin(LoginInput input) => Authentication.Login(input, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown", true);
@@ -38,7 +41,7 @@ public sealed class AuthController(AuthService authentication, AppSettings setti
     [HttpPost("users/{id:long}/unbind")]
     public async Task<IActionResult> Unbind(long id, ReverseInput input) { await Authentication.Unbind(await Current(), id, input.Reason, RequestId); return NoContent(); }
     [HttpGet("me")]
-    public async Task<object> Me() { var actor = await Current(); return new { actor.Id, actor.Name, actor.Roles, actor.SessionType, actor.SelectedRole }; }
+    public async Task<object> Me() { var actor = await Current(); return new { actor.Id, actor.Name, actor.Roles, actor.SessionType, actor.SelectedRole, actor.Permissions }; }
     [HttpPost("select-role")]
     public async Task<IActionResult> SelectRole(RoleSelectionInput input)
     {
