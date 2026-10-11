@@ -120,3 +120,5 @@ Web页面由 `/admin/` 提供，只有该前缀使用SPA fallback；未知 `/api
 lines含itemId/name/unit/domain/delta/balance；domain为WAREHOUSE_PACKAGING、EXTERNAL_PACKAGING、VEGETABLE或OUTPUT。OUTPUT为装菜产出未入库，EXTERNAL与OUTPUT的balance为null；仓库balance为该入账时的余额。列表最多显示3行，lineCount保留完整数量，详情包含全部行。
 
 未升级006返回503/NOTIFICATIONS_NOT_READY，原记账继续工作；模板未配置时feed正常但subscription.configured=false，订阅返回503/NOTIFICATION_NOT_CONFIGURED。草稿不产生动态，成功正式入账/冲销与动态同事务；事务提交后后台领取微信发送任务，微信失败不改变库存。字段映射与发送状态见 [发布说明](miniprogram-release-1.2.0.md)。普通一次性订阅授权不等于持续推送资格，发送SENT只表示微信接收成功。
+
+1.2.1后台默认模板为74963“库存更新提醒”，字段映射`{"thing8":"actor","time3":"time","thing4":"summary"}`，可由服务环境变量覆盖；详见 [当前发布说明](miniprogram-release-1.2.1.md)。已存在的空模板/字段变量会覆盖默认值，需要删除或填写正确值。

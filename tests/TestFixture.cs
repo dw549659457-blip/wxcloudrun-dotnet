@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using aspnetapp.Services;
 using MySqlConnector;
 using Xunit;
 using System.Net.Http.Headers;
@@ -65,7 +67,13 @@ public sealed class TestFixture : IAsyncLifetime
         Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(host =>
         {
             host.UseEnvironment("Development");
-            host.ConfigureServices(services => { services.RemoveAll<IWechatGateway>(); services.AddSingleton<IWechatGateway, FakeWechat>(); });
+            host.ConfigureServices(services =>
+            {
+                services.RemoveAll<IWechatGateway>(); services.AddSingleton<IWechatGateway, FakeWechat>();
+                // 通知队列由通知用例显式领取；通用测试宿主不自动向微信发送，也不抢测试任务。
+                foreach (var registration in services.Where(item => item.ServiceType == typeof(IHostedService) && item.ImplementationType == typeof(NotificationWorker)).ToArray())
+                    services.Remove(registration);
+            });
         });
         foreach (var user in new[] { "admin", "driver1", "driver2", "worker1", "worker2", "outbound1" })
         {

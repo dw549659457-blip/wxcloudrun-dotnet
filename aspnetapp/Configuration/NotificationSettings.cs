@@ -5,11 +5,14 @@ namespace aspnetapp.Configuration;
 
 public sealed record NotificationSettings(string TemplateId, Dictionary<string, string> Fields, string MiniprogramState = "trial", string ConfigurationError = "")
 {
+    // 用户提供的小程序公开模板74963：库存更新提醒。环境变量可覆盖；显式空值可停用。
+    public const string DefaultTemplateId = "qYyaJOr5BwwRMldhCHEBqhefy7wIvcsNsibhxWA1vrw";
+    public const string DefaultFieldsJson = "{\"thing8\":\"actor\",\"time3\":\"time\",\"thing4\":\"summary\"}";
     public bool Configured => TemplateId.Length > 0 && Fields.Count > 0 && ConfigurationError.Length == 0;
     public static NotificationSettings Load()
     {
-        var id = Environment.GetEnvironmentVariable("WECHAT_NOTIFICATION_TEMPLATE_ID") ?? "";
-        var json = Environment.GetEnvironmentVariable("WECHAT_NOTIFICATION_FIELDS") ?? "";
+        var id = Environment.GetEnvironmentVariable("WECHAT_NOTIFICATION_TEMPLATE_ID") ?? DefaultTemplateId;
+        var json = Environment.GetEnvironmentVariable("WECHAT_NOTIFICATION_FIELDS") ?? (id == DefaultTemplateId ? DefaultFieldsJson : "");
         var state = Environment.GetEnvironmentVariable("WECHAT_NOTIFICATION_STATE") ?? "trial";
         if (id.Length == 0 && json.Length == 0) return new("", [], state);
         try

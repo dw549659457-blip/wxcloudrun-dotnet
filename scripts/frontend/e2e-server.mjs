@@ -14,6 +14,9 @@ const environment = {
   ...process.env,
   ASPNETCORE_ENVIRONMENT: 'Development',
   DEV_LOGIN_ENABLED: 'true',
+  // 隔离端到端测试不向真实微信发送；实际模板载荷由HTTP替身用例验证。
+  WECHAT_NOTIFICATION_TEMPLATE_ID: '',
+  WECHAT_NOTIFICATION_FIELDS: '',
   MYSQL_HOST: host,
   MYSQL_PORT: process.env.E2E_MYSQL_PORT ?? '3306',
   MYSQL_USER: process.env.E2E_MYSQL_USER ?? 'root',
