@@ -1,0 +1,71 @@
+.start-page {
+  padding-top: 28px;
+}
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand-mark {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 30px;
+  font-weight: 700;
+  background: #176747;
+  border-radius: 17px;
+  box-shadow: 0 6px 16px rgba(23, 103, 71, 0.15);
+}
+.brand-copy {
+  flex: 1;
+  min-width: 0;
+}
+.brand-copy .title {
+  margin-bottom: 2px;
+}
+.start-intro {
+  margin: 24px 0;
+  color: #51664f;
+  font-size: 20px;
+  line-height: 1.7;
+}
+.start-intro-strong {
+  color: #294c36;
+}
+.entry-card {
+  padding: 20px;
+  border-top: 3px solid #176747;
+}
+.entry-description {
+  color: #51664f;
+  margin-top: 10px;
+}
+.entry-card .actions {
+  margin-top: 22px;
+}
+.candidate-card {
+  margin-top: 16px;
+  padding: 16px;
+  background: #edf5e9;
+  border-radius: 14px;
+  overflow-wrap: anywhere;
+}
+.candidate-name {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 8px 0;
+  color: #155b3a;
+}
+.entry-help {
+  text-align: center;
+  color: #51664f;
+  font-size: 18px;
+  margin-top: 22px;
+}
+.entry-help .link-button {
+  margin-top: 2px;
+}

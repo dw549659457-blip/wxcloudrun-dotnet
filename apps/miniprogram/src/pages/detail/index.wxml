@@ -9,7 +9,7 @@
   ><view wx:if="{{notice}}" class="warning">{{notice}}</view
   ><view wx:if="{{detail}}"
     ><view class="card"
-      ><view class="card-title">{{detail.document.input.businessDate}} · {{statusText}}</view
+      ><view class="card-heading"><view class="card-title">{{detail.document.input.businessDate}}</view><text class="status {{detail.document.status === 'DRAFT' ? 'status-draft' : detail.document.status === 'REVERSED' ? 'status-closed' : ''}}">{{statusText}}</text></view>
       ><view class="record-number">单据号：{{detail.document.number}}</view
       ><view>记录人：{{creator}}</view><view>创建：{{created}}</view><view>提交：{{posted}}</view
       ><view wx:if="{{detail.context.growerName}}">棚户：{{detail.context.growerName}}</view

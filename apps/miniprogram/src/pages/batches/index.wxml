@@ -1,40 +1,9 @@
-<view class="page"
-  ><view class="title">{{target === 'view' ? '我的棚户任务' : '选择棚户任务'}}</view
-  ><view class="subtitle">核对姓名、派发日期和司机，再点对应大卡片。</view
-  ><view class="field"
-    ><input
-      value="{{search}}"
-      bindinput="searchInput"
-      placeholder="输入棚户姓名搜索"
-      confirm-type="search"
-      bindconfirm="search"
-    /><button class="primary" bindtap="search" disabled="{{loading}}">搜索棚户</button></view
-  ><view class="notice" wx:if="{{loading}}">正在加载棚户任务…</view
-  ><view class="error" wx:if="{{error}}">{{error}}<button bindtap="load">重新加载</button></view
-  ><view class="empty" wx:if="{{!loading && !error && !rows.length}}"
-    >没有符合条件的任务。可清空姓名重新查询。</view
-  ><button
-    wx:for="{{rows}}"
-    wx:key="id"
-    class="card batch-choice"
-    data-id="{{item.id}}"
-    bindtap="choose"
-  >
-    <view class="card-title">{{item.growerName}}</view
-    ><view>派发 {{item.date}} · 司机{{item.driverName}}</view
-    ><view class="status">{{item.statusText}}</view><view>{{item.packagingText}}</view></button
-  ><view class="row-actions"
-    ><button bindtap="previous" disabled="{{loading || page === 1}}">上一页</button
-    ><view class="caption">第 {{page}} 页</view
-    ><button bindtap="next" disabled="{{loading || !canNext}}">下一页</button></view
-  ><view id="batch-detail" wx:if="{{selected}}" class="card"
-    ><view class="card-title">{{selected.batch.growerName}}对账</view
-    ><view wx:for="{{selected.packaging}}" wx:key="itemId" class="summary-line"
-      >{{item.name}}（{{item.unit}}）<view>派发 {{item.dispatched}} · 消耗 {{item.consumed}}</view
-      ><view>回收 {{item.recovered}} · 损耗 {{item.lost}} · 在外 {{item.outstanding}}</view></view
-    ><view wx:for="{{selected.vegetables}}" wx:key="itemId" class="summary-line"
-      >{{item.name}}：装菜 {{item.output}} · 实收 {{item.received}} · 差异 {{item.difference}}
-      {{item.unit}}</view
-    ></view
-  ></view
->
+<view class="page">
+  <view class="title">{{target === 'view' ? '我的棚户任务' : '选择棚户任务'}}</view><view class="subtitle">核对姓名、派发日期和司机，再选择对应任务。</view>
+  <view class="card search-card"><view class="field-label">找到要记账的棚户</view><input value="{{search}}" bindinput="searchInput" placeholder="输入棚户姓名" confirm-type="search" bindconfirm="search" /><button class="primary" bindtap="search" disabled="{{loading}}">搜索棚户</button></view>
+  <view class="notice" wx:if="{{loading}}">正在加载棚户任务…</view><view class="error" wx:if="{{error}}">{{error}}<button bindtap="load">重新加载</button></view>
+  <view class="empty" wx:if="{{!loading && !error && !rows.length}}"><view class="empty-title">没有找到符合条件的任务</view><view>清空姓名，可以重新查看全部任务。</view></view>
+  <button wx:for="{{rows}}" wx:key="id" class="card batch-choice" data-id="{{item.id}}" bindtap="choose" disabled="{{loading}}"><view class="card-heading"><view class="card-title">{{item.growerName}}</view><text class="status {{item.status !== 'OPEN' ? 'status-closed' : ''}}">{{item.statusText}}</text></view><view class="meta-line">派发日期：{{item.date}}</view><view class="meta-line">司机：{{item.driverName}}</view><view class="batch-packaging">{{item.packagingText}}</view><view class="batch-cta">{{target === 'view' ? '查看这户对账' : '选择这户任务'}}<text>›</text></view></button>
+  <view class="row-actions pagination"><button bindtap="previous" disabled="{{loading || page === 1}}">上一页</button><view class="page-number">第 {{page}} 页</view><button bindtap="next" disabled="{{loading || !canNext}}">下一页</button></view>
+  <view id="batch-detail" wx:if="{{selected}}" class="card batch-detail"><view class="card-title">{{selected.batch.growerName}}对账</view><view wx:for="{{selected.packaging}}" wx:key="itemId" class="summary-line">{{item.name}}（{{item.unit}}）<view>派发 {{item.dispatched}} · 消耗 {{item.consumed}}</view><view>回收 {{item.recovered}} · 损耗 {{item.lost}}</view><view class="quantity">在外 {{item.outstanding}} {{item.unit}}</view></view><view wx:for="{{selected.vegetables}}" wx:key="itemId" class="summary-line">{{item.name}}：装菜 {{item.output}} · 实收 {{item.received}} · 差异 {{item.difference}} {{item.unit}}</view></view>
+</view>

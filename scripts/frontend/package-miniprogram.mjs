@@ -7,6 +7,9 @@ import { createHash } from 'node:crypto';
 import { verifyMiniprogram, verifyCloudSmoke } from './verify-miniprogram.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
+const release = JSON.parse(
+  await readFile(resolve(root, 'apps/miniprogram/src/release.json'), 'utf8'),
+);
 const output = resolve(root, 'out/miniprogram-delivery');
 const project = resolve(output, 'vegetable-miniprogram');
 const configuration = JSON.parse(
@@ -52,6 +55,7 @@ await writeFile(
 );
 await cp(resolve(root, 'docs/miniprogram-import.md'), resolve(project, 'README-导入说明.md'));
 await cp(resolve(root, 'LICENSE'), resolve(project, 'LICENSE'));
+await cp(resolve(root, 'docs/miniprogram-release-1.1.0.md'), resolve(project, '发布试上线说明.md'));
 await writeFile(
   resolve(project, '微信验收清单.md'),
   (await readFile(resolve(root, 'docs/miniprogram-verification.md'), 'utf8')).replaceAll(
@@ -78,6 +82,8 @@ await writeFile(
     {
       sourceRepository: 'dw549659457-blip/wxcloudrun-dotnet',
       sourceRevision: gitRevision,
+      deliveryVersion: release.version,
+      description: release.description,
       builtAt: new Date().toISOString(),
       appIdConfigured: appId !== 'touristappid',
       envIdConfigured: Boolean(settings.envId),
@@ -109,6 +115,9 @@ const sha256 = createHash('sha256')
   .update(await readFile(archive))
   .digest('hex');
 await writeFile(`${archive}.sha256`, `${sha256}  vegetable-miniprogram-import.zip\n`);
+const versionedName = `vegetable-miniprogram-${release.version}.zip`;
+await cp(archive, resolve(output, versionedName));
+await writeFile(resolve(output, `${versionedName}.sha256`), `${sha256}  ${versionedName}\n`);
 console.log(
   `可直接导入的工程：${archive}；主包 ${result.bytes} 字节，${result.pages} 页面 / ${result.components} 组件。`,
 );

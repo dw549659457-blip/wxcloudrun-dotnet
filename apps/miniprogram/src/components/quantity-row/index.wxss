@@ -1,10 +1,14 @@
 .quantity-card {
   padding: 14px;
   margin: 12px 0;
-  border: 1px solid #b9caba;
-  border-radius: 12px;
+  border: 1px solid #d3e0cf;
+  border-radius: 16px;
   background: white;
   font-size: 18px;
+  color: #20382b;
+  box-sizing: border-box;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 .choice {
   padding: 12px 8px;
@@ -19,26 +23,31 @@
   gap: 8px;
   margin-top: 8px;
 }
-.quantity-controls button {
+.step-button {
   flex: 0 0 48px;
   width: 48px;
-  min-height: 56px;
+  min-height: 64px;
   padding: 0;
   margin: 0;
   font-size: 24px;
-  background: #edf3e9;
+  background: #edf5e9;
   color: #26462d;
-  line-height: 56px;
+  line-height: 64px;
+  border-radius: 12px;
 }
-.quantity-controls input {
+.quantity-input {
   flex: 1;
   min-width: 0;
-  font-size: 20px;
+  font-size: 24px;
   border: 1px solid #aebfaf;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 8px;
-  height: 56px;
+  height: 64px;
+  line-height: 1.4;
   box-sizing: border-box;
+  color: #176747;
+  font-weight: 600;
+  text-align: center;
 }
 .unit {
   font-size: 18px;
@@ -50,26 +59,65 @@
   line-height: 48px;
   background: #fff;
   color: #7e3528;
-  margin-top: 12px;
+  margin: 10px 0 0;
   padding: 0;
 }
 
 .type-choices {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
 }
-.type-choices button {
+.type-option {
+  width: calc(50% - 4px);
+  box-sizing: border-box;
   font-size: 20px;
-  min-height: 56px;
+  min-height: 72px;
   line-height: 1.5;
   padding: 12px;
   margin: 0;
   background: white;
   color: #26462d;
   white-space: normal;
+  border-radius: 12px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 .type-choices .selected-type {
   border: 2px solid #176747;
   background: #edf6e9;
+}
+.row-heading {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.quantity-label {
+  font-size: 18px;
+  margin-top: 14px;
+  color: #39583d;
+}
+.selected-label {
+  font-size: 18px;
+  color: #176747;
+  font-weight: 600;
+}
+.type-option::after,
+.step-button::after {
+  border: 1px solid #cddccb;
+  border-radius: 12px;
+}
+.type-choices .selected-type::after,
+.remove::after {
+  border: 0;
+}
+.remove {
+  width: 100%;
+  border-radius: 10px;
+  font-weight: 400;
+}
+.step-button.control-disabled,
+.type-option.control-disabled {
+  color: #617161;
+  background: #edf0e9;
 }

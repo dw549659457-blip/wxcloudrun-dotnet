@@ -8,3 +8,27 @@
   box-sizing: border-box;
   line-height: 1.7;
 }
+.search-card button {
+  margin-top: 12px;
+}
+.batch-packaging {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f5f8f3;
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+.batch-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #176747;
+  font-weight: 600;
+  margin-top: 14px;
+}
+.batch-cta text {
+  font-size: 28px;
+}
+.batch-detail {
+  margin-top: 24px;
+}

@@ -2,6 +2,7 @@ import { friendlyError, roleLabels, type Role } from '@warehouse/contracts';
 import { requireSession, logout } from '../../services/session';
 import { api } from '../../services/api';
 import type { TapEvent } from '../../types';
+import release from '../../release.json';
 Page({
   data: {
     name: '',
@@ -9,6 +10,7 @@ Page({
     roles: [] as { value: Role; label: string }[],
     error: '',
     busy: false,
+    version: release.version,
   },
   async onShow() {
     try {
@@ -18,7 +20,7 @@ Page({
           name: session.name,
           role: session.selectedRole ?? '',
           roles: session.roles
-            .filter((role) => role !== 'ADMIN')
+            .filter((role) => ['DRIVER', 'WORKER', 'OUTBOUND'].includes(role))
             .map((role) => ({ value: role, label: roleLabels[role] })),
         });
       }

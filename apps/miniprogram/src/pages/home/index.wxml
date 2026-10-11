@@ -1,72 +1,18 @@
-<view class="page"
-  ><view class="title">{{name ? name + '，您好' : '今天记什么？'}}</view
-  ><view class="subtitle">{{roleName ? '当前身份：' + roleName : '请选择本次身份'}}</view
-  ><view wx:if="{{loading}}" class="notice">正在核实身份与任务…</view
-  ><view wx:if="{{error}}" class="error">{{error}}<button bindtap="retry">重新加载</button></view>
-  <view wx:if="{{selecting && !loading}}"
-    ><button
-      wx:for="{{roles}}"
-      wx:key="value"
-      class="primary"
-      data-role="{{item.value}}"
-      bindtap="chooseRole"
-    >
-      我是{{item.label}}</button
-    ><view wx:if="{{!roles.length}}" class="notice"
-      >此账号只有管理员身份，请使用网页管理后台。</view
-    ></view
-  >
-  <view wx:if="{{guided && role}}" class="card"
-    ><view class="card-title">第一次使用</view
-    ><view>先选姓名与品类 → 填本次数量 → 核对后确认记账。</view
-    ><view class="row-actions"
-      ><button data-url="/pages/help/index" bindtap="navigate">看操作图解</button
-      ><button bindtap="dismissGuide">我知道了</button></view
-    ></view
-  >
-  <view wx:if="{{role === 'DRIVER'}}"
-    ><view class="notice">还有 {{pendingCount}} 户任务没收完</view
-    ><view class="actions"
-      ><button class="primary" data-url="/pages/dispatch/index" bindtap="navigate">派发包装</button
-      ><button data-url="/pages/batches/index?for=recovery" bindtap="navigate">
-        回收包装和蔬菜</button
-      ><view class="section-title">优先回收这些棚户</view
-      ><button
-        wx:for="{{pendingBatches}}"
-        wx:key="id"
-        class="card"
-        data-url="/pages/recovery/index?batchId={{item.id}}"
-        bindtap="navigate"
-      >
-        <view class="card-title">{{item.growerName}}</view
-        ><view>{{item.date}} · 还没收完</view></button
-      ><button data-url="/pages/batches/index?for=view" bindtap="navigate">查看全部棚户任务</button
-      ><button data-url="/pages/records/index?resource=dispatches" bindtap="navigate">
-        我的派发记录</button
-      ><button data-url="/pages/records/index?resource=recoveries" bindtap="navigate">
-        我的回收记录
-      </button></view
-    ></view
-  >
-  <view wx:if="{{role === 'WORKER'}}"
-    ><view class="notice">当前 {{pendingCount}} 个棚户任务可以装菜</view
-    ><view class="actions"
-      ><button class="primary" data-url="/pages/work/index" bindtap="navigate">装菜登记</button
-      ><button data-url="/pages/records/index?resource=work-records" bindtap="navigate">
-        我的记录
-      </button></view
-    ></view
-  >
-  <view wx:if="{{role === 'OUTBOUND'}}" class="actions"
-    ><button class="primary" data-url="/pages/outbound/index?mode=NORMAL" bindtap="navigate">
-      正常出库</button
-    ><button data-url="/pages/outbound/index?mode=DIRECT" bindtap="navigate">手工出库</button
-    ><button data-url="/pages/inventory/index" bindtap="navigate">查看蔬菜库存</button
-    ><button data-url="/pages/records/index?resource=outbounds" bindtap="navigate">
-      我的出库记录
-    </button></view
-  >
-  <button class="link-button" data-url="/pages/profile/index" bindtap="navigate">
-    我的身份和帮助
-  </button>
+<view class="page">
+  <view class="home-hero"><view class="home-caption">棚户记账 · 工作台</view><view class="home-identity"><view class="home-name">{{name ? name + '，您好' : '今天记什么？'}}</view><view class="role-badge" wx:if="{{roleName}}">{{roleName}}</view></view><view class="home-caption">{{roleName ? '只记本次，核对后确认。' : '选择本次岗位，开始今天的工作。'}}</view></view>
+  <view wx:if="{{loading}}" class="notice">正在核实身份与任务…</view><view wx:if="{{error}}" class="error">{{error}}<button bindtap="retry">重新加载</button></view>
+  <view wx:if="{{selecting && !loading && !error}}" class="card"><view class="card-title">今天使用哪个岗位？</view><view class="caption">岗位由管理员登记，可以在“我的身份”中切换。</view><view class="actions"><button wx:for="{{roles}}" wx:key="value" class="primary" data-role="{{item.value}}" bindtap="chooseRole">我是{{item.label}}</button></view></view>
+  <view wx:if="{{role && !loading && !error}}">
+    <view class="task-overview" wx:if="{{role === 'DRIVER' || role === 'WORKER'}}"><view><view class="overview-label">{{role === 'DRIVER' ? '待回收棚户' : '可装菜任务'}}</view><view class="caption">{{role === 'DRIVER' ? '收完一户，核对一户' : '先核对棚户、日期和司机'}}</view></view><view class="overview-count">{{pendingCount}}<text>户</text></view></view>
+    <view wx:if="{{role === 'DRIVER'}}">
+      <view class="actions"><button class="task-button primary" data-url="/pages/dispatch/index" bindtap="navigate"><text class="task-icon">派</text><view class="task-copy"><view class="task-title">派发包装</view><view class="task-description">选棚户，记这次送出多少</view></view><text class="task-arrow">›</text></button><button class="task-button" data-url="/pages/batches/index?for=recovery" bindtap="navigate"><text class="task-icon">收</text><view class="task-copy"><view class="task-title">回收包装与蔬菜</view><view class="task-description">核对运回数量与任务状态</view></view><text class="task-arrow">›</text></button></view>
+      <view class="section-title">优先回收</view><view class="empty" wx:if="{{!pendingBatches.length}}"><view class="empty-title">暂时没有待回收任务</view><view>新的派发入账后，会在这里显示。</view></view>
+      <button wx:for="{{pendingBatches}}" wx:key="id" class="pending-task" data-url="/pages/recovery/index?batchId={{item.id}}" bindtap="navigate"><view class="pending-copy"><view class="card-title">{{item.growerName}}</view><view class="caption">{{item.date}} · 还没收完</view></view><text class="task-arrow">›</text></button>
+      <view class="section-title">查询与记录</view><view class="shortcut-grid"><button data-url="/pages/batches/index?for=view" bindtap="navigate">全部棚户任务</button><button data-url="/pages/records/index?resource=dispatches" bindtap="navigate">派发记录</button><button data-url="/pages/records/index?resource=recoveries" bindtap="navigate">回收记录</button><button data-url="/pages/profile/index" bindtap="navigate">我的身份</button></view>
+    </view>
+    <view wx:if="{{role === 'WORKER'}}"><view class="actions"><button class="task-button primary" data-url="/pages/work/index" bindtap="navigate"><text class="task-icon">装</text><view class="task-copy"><view class="task-title">装菜登记</view><view class="task-description">记本次消耗与装好的蔬菜</view></view><text class="task-arrow">›</text></button></view><view class="section-title">查询与帮助</view><view class="shortcut-grid"><button data-url="/pages/records/index?resource=work-records" bindtap="navigate">装菜记录</button><button data-url="/pages/profile/index" bindtap="navigate">我的身份</button></view></view>
+    <view wx:if="{{role === 'OUTBOUND'}}"><view class="actions"><button class="task-button primary" data-url="/pages/outbound/index?mode=NORMAL" bindtap="navigate"><text class="task-icon">出</text><view class="task-copy"><view class="task-title">正常出库</view><view class="task-description">选客户，填写实际出库数量</view></view><text class="task-arrow">›</text></button><button class="task-button" data-url="/pages/outbound/index?mode=DIRECT" bindtap="navigate"><text class="task-icon">手</text><view class="task-copy"><view class="task-title">手工出库</view><view class="task-description">说明来源，实际数量填正数</view></view><text class="task-arrow">›</text></button></view><view class="section-title">库存与记录</view><view class="shortcut-grid"><button data-url="/pages/inventory/index" bindtap="navigate">蔬菜库存</button><button data-url="/pages/records/index?resource=outbounds" bindtap="navigate">出库记录</button><button data-url="/pages/profile/index" bindtap="navigate">我的身份</button><button data-url="/pages/help/index" bindtap="navigate">操作帮助</button></view></view>
+    <view wx:if="{{guided}}" class="card guide-card"><view class="card-title">第一次使用？跟着这三步</view><view class="caption">选对棚户或客户 → 填本次数量 → 核对后确认。</view><view class="row-actions"><button data-url="/pages/help/index" bindtap="navigate">看操作图解</button><button bindtap="dismissGuide">我知道了</button></view></view>
+  </view>
+  <button class="link-button" data-url="/pages/profile/index" bindtap="navigate">身份设置与操作帮助</button>
 </view>

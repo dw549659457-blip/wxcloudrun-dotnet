@@ -1,62 +1,16 @@
-<view class="page">
-  <view class="title">棚户记账</view><view class="subtitle">派发 · 装菜 · 回收 · 出库</view>
-  <view class="card"
-    ><view class="card-title">先确认您是谁</view
-    ><view>管理员先登记员工，再用本人微信和手机号绑定。以后打开可直接进入。</view></view
-  >
-  <view class="error" wx:if="{{error}}">{{error}}</view
-  ><view class="notice" wx:if="{{notice}}">{{notice}}</view>
-  <view class="actions" wx:if="{{stage === 'START'}}"
-    ><button class="primary" bindtap="begin" loading="{{loading}}" disabled="{{loading}}">
-      开始使用
-    </button></view
-  >
-  <view wx:if="{{stage === 'PHONE'}}"
-    ><view class="section-title">用本人手机号核实</view
-    ><button
-      class="primary"
-      open-type="getPhoneNumber"
-      bindgetphonenumber="phone"
-      loading="{{loading}}"
-      disabled="{{loading}}"
-    >
-      用微信手机号开始使用</button
-    ><button class="link-button" bindtap="notMe">手机号不匹配，找管理员协助</button></view
-  >
-  <view wx:if="{{stage === 'CONFIRM'}}"
-    ><view class="card"
-      ><view class="caption">请核对下面身份</view><view class="card-title">{{candidate}}</view
-      ><view>确认后，此微信会绑定到这位员工。</view></view
-    ><view class="actions"
-      ><button class="primary" bindtap="confirm" loading="{{loading}}" disabled="{{loading}}">
-        是我，确认绑定</button
-      ><button bindtap="notMe" disabled="{{loading}}">不是我，联系管理员</button></view
-    ></view
-  >
-  <view wx:if="{{stage === 'ASSIST' || assistance}}"
-    ><button class="primary" bindtap="requestHelp" disabled="{{loading}}" loading="{{loading}}">
-      申请管理员协助绑定
-    </button></view
-  >
-  <view wx:if="{{stage === 'WAITING'}}"
-    ><button class="primary" bindtap="checkHelp" disabled="{{loading}}" loading="{{loading}}">
-      查看核实结果
-    </button></view
-  >
-  <button class="link-button" bindtap="contact">联系管理员</button>
-  <view class="card" wx:if="{{development}}"
-    ><view class="card-title">仅本地开发验证</view><view>正式发布使用上方微信进入。</view
-    ><input
-      value="{{username}}"
-      data-field="username"
-      bindinput="field"
-      placeholder="开发账号"
-    /><input
-      password="true"
-      value="{{password}}"
-      data-field="password"
-      bindinput="field"
-      placeholder="开发密码"
-    /><button bindtap="developmentLogin" disabled="{{loading}}">本地验证登录</button></view
-  >
+<view class="page start-page">
+  <view class="brand-row"><view class="brand-mark" aria-hidden="true">记</view><view class="brand-copy"><view class="title">棚户记账</view><view class="caption">包装流转 · 蔬菜记账</view></view></view>
+  <view class="start-intro">把每一笔记清楚，<text class="start-intro-strong">把每一户对明白。</text></view>
+  <view class="card entry-card">
+    <view class="card-title">{{stage === 'CONFIRM' ? '核对您的身份' : stage === 'WAITING' ? '等待管理员核实' : '用本人微信进入'}}</view>
+    <view class="entry-description" wx:if="{{stage === 'START'}}">管理员先登记，首次核实本人手机号，以后直接进入。</view>
+    <view class="error" wx:if="{{error}}">{{error}}</view><view class="notice" wx:if="{{notice}}">{{notice}}</view>
+    <view class="actions" wx:if="{{stage === 'START'}}"><button class="primary" bindtap="begin" loading="{{loading}}" disabled="{{loading}}">{{loading ? '正在核实微信身份…' : '开始使用'}}</button></view>
+    <view wx:if="{{stage === 'PHONE'}}"><view class="entry-description">授权本人手机号，找到管理员登记的员工账号。</view><view class="actions"><button class="primary" open-type="getPhoneNumber" bindgetphonenumber="phone" loading="{{loading}}" disabled="{{loading}}">用微信手机号核实身份</button></view><button class="link-button" bindtap="notMe">手机号不匹配，找管理员协助</button></view>
+    <view wx:if="{{stage === 'CONFIRM'}}"><view class="candidate-card"><view class="caption">请核对姓名与岗位</view><view class="candidate-name">{{candidate}}</view><view>确认后，此微信绑定到这位员工。</view></view><view class="actions"><button class="primary" bindtap="confirm" loading="{{loading}}" disabled="{{loading}}">是我，确认绑定</button><button bindtap="notMe" disabled="{{loading}}">不是我，联系管理员</button></view></view>
+    <view wx:if="{{stage === 'ASSIST' || assistance}}" class="actions"><button class="primary" bindtap="requestHelp" disabled="{{loading}}" loading="{{loading}}">申请管理员协助绑定</button></view>
+    <view wx:if="{{stage === 'WAITING'}}" class="actions"><button class="primary" bindtap="checkHelp" disabled="{{loading}}" loading="{{loading}}">查看核实结果</button></view>
+  </view>
+  <view class="entry-help"><view>姓名不对或授权遇到问题？</view><button class="link-button" bindtap="contact">联系管理员</button></view>
+  <view class="card" wx:if="{{development}}"><view class="card-title">仅本地开发验证</view><view>正式发布使用上方微信进入。</view><view class="field"><input value="{{username}}" data-field="username" bindinput="field" placeholder="开发账号" /></view><view class="field"><input password="true" value="{{password}}" data-field="password" bindinput="field" placeholder="开发密码" /></view><button bindtap="developmentLogin" disabled="{{loading}}">本地验证登录</button></view>
 </view>

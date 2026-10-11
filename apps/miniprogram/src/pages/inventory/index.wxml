@@ -1,17 +1,6 @@
-<view class="page"
-  ><view class="title">蔬菜库存</view
-  ><view class="subtitle">按品类与单位分别显示，提交前会再次核对。</view
-  ><button class="primary" bindtap="load" disabled="{{loading}}">刷新库存</button
-  ><view wx:if="{{loading}}" class="notice">正在查询库存…</view
-  ><view wx:if="{{error}}" class="error">{{error}}</view
-  ><view wx:for="{{rows}}" wx:key="id" class="card"
-    ><view class="card-title">{{item.name}}</view
-    ><view class="quantity">{{item.quantity}} {{item.unit}}</view
-    ><view wx:if="{{!item.enabled}}">此品类已停用</view></view
-  ><view wx:if="{{!loading && !error && !rows.length}}" class="empty">当前没有蔬菜库存记录。</view
-  ><view class="row-actions"
-    ><button bindtap="previous" disabled="{{loading || page === 1}}">上一页</button
-    ><view>第 {{page}} 页</view
-    ><button bindtap="next" disabled="{{loading || !canNext}}">下一页</button></view
-  ></view
->
+<view class="page">
+  <view class="title">蔬菜库存</view><view class="subtitle">按品类、单位查看当前可出库数量。</view><button class="primary" bindtap="load" disabled="{{loading}}" loading="{{loading}}">{{loading ? '正在查询库存…' : '刷新库存'}}</button>
+  <view wx:if="{{error}}" class="error">{{error}}</view><view class="inventory-list"><view wx:for="{{rows}}" wx:key="id" class="card inventory-card"><view class="card-heading"><view class="card-title">{{item.name}}</view><text class="status status-closed" wx:if="{{!item.enabled}}">已停用</text></view><view class="caption">当前库存</view><view class="quantity inventory-value">{{item.quantity}}<text class="inventory-unit">{{item.unit}}</text></view></view></view>
+  <view wx:if="{{!loading && !error && !rows.length}}" class="empty"><view class="empty-title">暂无蔬菜库存记录</view><view>库存入账后，可以在这里查看。</view></view>
+  <view class="row-actions pagination"><button bindtap="previous" disabled="{{loading || page === 1}}">上一页</button><view class="page-number">第 {{page}} 页</view><button bindtap="next" disabled="{{loading || !canNext}}">下一页</button></view><view class="page-footer">提交出库前，后台会再次核对库存。</view>
+</view>

@@ -38,7 +38,7 @@ dotnet publish aspnetapp -c Release -o out/api
 
 ## 微信开发者工具导入
 
-**直接导入工程包**：运行 `pnpm package:miniprogram`，取得 `out/miniprogram-delivery/vegetable-miniprogram-import.zip`。解压后在开发者工具导入含 `project.config.json` 的 `vegetable-miniprogram` 目录，填写 AppID 和 `miniprogram/config/runtime.js` 的 envId；不需要安装 Node.js 或“构建 npm”。具体步骤见 [工程包导入说明](miniprogram-import.md)。交付打包固定 cloud 模式并关闭开发登录，不会使用本机 `local.ts`。
+**直接导入工程包**：运行 `pnpm package:miniprogram`，取得 `out/miniprogram-delivery/vegetable-miniprogram-1.1.0.zip`。解压后在开发者工具导入含 `project.config.json` 的 `vegetable-miniprogram` 目录，AppID 与 `miniprogram/config/runtime.js` 的 envId 已预填；不需要安装 Node.js 或“构建 npm”。具体步骤见 [工程包导入说明](miniprogram-import.md)。交付打包固定 cloud 模式并关闭开发登录，不会使用本机 `local.ts`。
 
 以下是源码开发方式：
 
@@ -74,12 +74,15 @@ pnpm build
 dotnet test tests/Business.Tests.csproj
 dotnet publish aspnetapp -c Release -o out/api
 pnpm exec playwright install chromium
+pnpm verify:miniprogram:ui
 pnpm test:e2e
 ```
 
 端到端测试只连接本机 MySQL，环境变量为 `E2E_MYSQL_HOST/PORT/USER/PASSWORD`（默认 `127.0.0.1:3306`、root、空密码，适用于隔离测试实例）。需要有创建/删除随机测试库的权限；不得填生产连接。测试生成 `vegetable_ui_<随机值>`，用随机密码创建种子，结束删除该库和私有状态文件。不会清空开发库或生产库。Excel 验证还需 Python 3。若系统已安装 Chromium，可设置 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` 指向本机可执行文件，避免重复下载。
 
-CI 将前端校验、构建、工程包验证、44 项 C# 测试和浏览器测试纳入同一工作流。`pnpm test:e2e` 先重新构建正式 cloud 包，通过 callContainer 替身转接真实 C# 与 MySQL；会覆盖本机生成的 runtime.js，测试前保留个人配置。`out/mini-verification` 是另行手动生成的本地 wx.request 验证包，既不会进入 Docker，也不会替代正式小程序包。
+`pnpm verify:miniprogram:ui` 不需要后台或数据库：重新编译发布包，并检查25个实际WXML/WXSS页面状态在320/375/430宽及125%字号下的排版，共100项。输出浏览器映射截图及JSON报告到 `artifacts/miniprogram-ui/`，并非真实微信截图或设备测试。
+
+CI 将前端校验、构建、工程包验证、100项小程序布局检查、44 项 C# 测试和浏览器测试纳入同一工作流。`pnpm test:e2e` 先重新构建正式 cloud 包，通过 callContainer 替身转接真实 C# 与 MySQL；会覆盖本机生成的 runtime.js，测试前保留个人配置。`out/mini-verification` 是另行手动生成的本地 wx.request 验证包，既不会进入 Docker，也不会替代正式小程序包。
 
 ## 上线后最小验证
 

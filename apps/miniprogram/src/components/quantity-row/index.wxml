@@ -1,14 +1,15 @@
 <view class="quantity-card">
+  <view class="row-heading">{{selectedName || '先选择品类'}}<text class="unit" wx:if="{{selectedUnit}}"> · {{selectedUnit}}</text></view>
   <view class="type-choices" wx:if="{{options.length <= 4}}"
     ><button
       wx:for="{{options}}"
       wx:key="id"
-      class="{{value.itemId === item.id ? 'selected-type' : ''}}"
+      class="type-option {{value.itemId === item.id ? 'selected-type' : ''}} {{disabled ? 'control-disabled' : ''}}"
       data-id="{{item.id}}"
       bindtap="chooseItem"
       disabled="{{disabled}}"
     >
-      {{item.name}}（{{item.unit}}）{{value.itemId === item.id ? ' · 已选' : ''}}
+      <view>{{item.name}}（{{item.unit}}）</view><view class="selected-label" wx:if="{{value.itemId === item.id}}">✓ 已选</view>
     </button></view
   >
   <picker
@@ -22,10 +23,12 @@
       <text class="unit" wx:if="{{selectedUnit}}">（{{selectedUnit}}）</text></view
     ></picker
   >
+  <view class="quantity-label">本次数量<text class="unit" wx:if="{{selectedUnit}}">（{{selectedUnit}}）</text></view>
   <view class="quantity-controls"
-    ><button aria-label="数量减一" data-delta="-1" bindtap="step" disabled="{{disabled}}">－</button
+    ><button class="step-button {{disabled ? 'control-disabled' : ''}}" aria-label="数量减一" data-delta="-1" bindtap="step" disabled="{{disabled}}">－</button
     ><input
       aria-label="本次数量"
+      class="quantity-input"
       type="{{inputType}}"
       value="{{value.quantity}}"
       placeholder="填本次数量"
@@ -34,8 +37,7 @@
       bindinput="quantity"
       adjust-position="true"
       cursor-spacing="100"
-    /><text class="unit">{{selectedUnit}}</text
-    ><button aria-label="数量加一" data-delta="1" bindtap="step" disabled="{{disabled}}">
+    /><button class="step-button {{disabled ? 'control-disabled' : ''}}" aria-label="数量加一" data-delta="1" bindtap="step" disabled="{{disabled}}">
       ＋
     </button></view
   >
