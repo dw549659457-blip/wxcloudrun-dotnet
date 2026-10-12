@@ -2,6 +2,8 @@
 
 **直接下载小程序工程**：[1.2.1 管理员动态试上线版 ZIP](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/vegetable-miniprogram-1.2.1.zip)。解压后直接导入微信开发者工具，AppID 和云环境 ID 已填好；下载方法见 [交付目录](deliverables/README.md)。
 
+**图文使用资料**：[22页PDF使用手册](deliverables/user-manual-1.2.1.pdf) · [PDF/网页版/审核资料下载包](deliverables/user-manual-1.2.1.zip) · [审核版本描述与填写说明](docs/review-submission-1.2.1.md)。覆盖后台添加用户、本人微信绑定及各岗位完整操作，含31张演示截图。
+
 本仓库在用户现有 `wxcloudrun-dotnet` 模板中实现业务后台，按用户确认继续使用 **C# + ASP.NET Core**，升级至 **.NET 10 LTS**，使用 MySQL/InnoDB、MySqlConnector 参数化 SQL 和 C# decimal。原云托管 Dockerfile 入口、80 容器端口和 MySQL 配置名保持兼容；原计数器接口已由真实业务接口替代，原库和云服务版本不被修改。
 
 已提供后台 API、React 管理后台、原生微信小程序、数据库迁移与测试。管理后台构建后由同一 .NET 服务在 `/admin/` 提供；小程序从 `apps/miniprogram` 导入微信开发者工具。前端安装/配置见 [frontend-setup.md](docs/frontend-setup.md)，员工指引见 [employee-quickstart.md](docs/employee-quickstart.md)，管理员图文指引见 [admin-quickstart.md](docs/admin-quickstart.md)。用户已反馈整体联通正常；逐岗位试用与真机显示检查见 [1.2.1发布说明](docs/miniprogram-release-1.2.1.md)。
