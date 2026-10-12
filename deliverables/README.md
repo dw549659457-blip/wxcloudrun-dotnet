@@ -25,3 +25,11 @@
 使用资料ZIP是手册，不是小程序上传工程。截图中的待审核版本1.0.0与交付版本1.2.1需核对实际上传包；小程序微信身份核实的审核测试访问方式需如实说明。
 
 手册生成命令：`python3 scripts/generate-user-manual.py`，再执行`node scripts/export-user-manual.mjs`。生成时验证31张图离线加载、A4章节不溢出和手机宽度不溢出。
+
+## 上线前基础数据维护Excel
+
+[下载管理员数据维护表](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/prelaunch-data-maintenance-1.2.1.xlsx)。
+
+11个可见工作表：维护指导、清单、人员账号、棚户、包装、蔬菜、客户、期初盘点、未结任务、上线核对与填写示例。填写区留空，示例另放；支持下拉、手机号文本格式、唯一性辅助校验及自动差额。密码只记录设置状态，不填写真实值。
+
+填好后按后台页面维护，当前没有本表的批量导入功能。已有库存先核对系统余额，不重复做期初；在外包装和未入仓菜单独核对。详细规则见 [维护指导](../docs/prelaunch-data-maintenance.md)。
