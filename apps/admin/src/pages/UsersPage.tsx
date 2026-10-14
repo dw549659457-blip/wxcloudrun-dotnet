@@ -15,6 +15,10 @@ import { usePagedQuery } from '../hooks/usePagedQuery';
 export function UsersPage() {
   const { user } = useAuth();
   const isAdmin = user?.roles.includes('ADMIN') ?? false;
+  const canManagePeople = isAdmin || (user?.roles.includes('ACCOUNTANT') ?? false);
+  const canManage = (item: UserRecord) =>
+    canManagePeople &&
+    (isAdmin || !item.roles.split(',').some((role) => role === 'ADMIN' || role === 'ACCOUNTANT'));
   const data = usePagedQuery<UserRecord>('/api/users');
   const [editing, setEditing] = useState<UserRecord | 'new' | null>(null);
   const [form] = Form.useForm<UserInput>();
@@ -78,11 +82,11 @@ export function UsersPage() {
     <>
       <PageHeading
         title="员工与角色"
-        description="管理员维护员工和后台账号。管理员、会计需要独立密码；司机、工人和出库员通过微信确认身份。修改账号会撤销旧会话。"
+        description="管理员维护全部账号；后台管理员维护下级员工、岗位及开通审批。同级和上级账号由管理员维护。修改账号会撤销旧会话。"
         extra={
           <Space>
             <DataExportButton resource="users" module="users" />
-            {isAdmin && (
+            {canManagePeople && (
               <Button type="primary" onClick={() => open('new')}>
                 新增员工
               </Button>
@@ -112,10 +116,14 @@ export function UsersPage() {
             title: '操作',
             render: (_, item) => (
               <Space>
-                {isAdmin && <Button onClick={() => open(item)}>编辑</Button>}
+                {canManagePeople && (
+                  <Button disabled={!canManage(item)} onClick={() => open(item)}>
+                    编辑
+                  </Button>
+                )}
                 <Button
-                  style={{ display: isAdmin ? undefined : 'none' }}
-                  disabled={!item.bound}
+                  style={{ display: canManagePeople ? undefined : 'none' }}
+                  disabled={!item.bound || !canManage(item)}
                   onClick={() => {
                     setUnbinding(item);
                     setReason('');
@@ -174,16 +182,20 @@ export function UsersPage() {
             rules={[{ required: true, message: '至少选择一个岗位' }]}
           >
             <Checkbox.Group
-              options={Object.entries(roleLabels).map(([value, label]) => ({ value, label }))}
+              options={Object.entries(roleLabels)
+                .filter(([value]) => isAdmin || (value !== 'ADMIN' && value !== 'ACCOUNTANT'))
+                .map(([value, label]) => ({ value, label }))}
             />
           </Form.Item>
-          <Form.Item
-            name="password"
-            label="后台密码（管理员、会计必填，编辑留空则保持原密码）"
-            rules={[{ min: 12, max: 128, message: '密码需12—128字符' }]}
-          >
-            <Input.Password autoComplete="new-password" />
-          </Form.Item>
+          {isAdmin && (
+            <Form.Item
+              name="password"
+              label="后台密码（管理员、后台管理员必填，编辑留空则保持原密码）"
+              rules={[{ min: 12, max: 128, message: '密码需12—128字符' }]}
+            >
+              <Input.Password autoComplete="new-password" />
+            </Form.Item>
+          )}
           <Form.Item name="enabled" label="账号启用" valuePropName="checked">
             <Switch />
           </Form.Item>

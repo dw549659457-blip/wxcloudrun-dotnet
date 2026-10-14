@@ -55,6 +55,16 @@ await writeFile(
 );
 await cp(resolve(root, 'docs/miniprogram-import.md'), resolve(project, 'README-导入说明.md'));
 await cp(resolve(root, 'LICENSE'), resolve(project, 'LICENSE'));
+if (release.version === '1.2.2') {
+  await cp(
+    resolve(root, 'docs/backoffice-role-hierarchy.md'),
+    resolve(project, '后台管理员职级说明.md'),
+  );
+  await cp(
+    resolve(root, 'deliverables/prelaunch-data-maintenance-1.2.2.xlsx'),
+    resolve(project, '数据维护填写表.xlsx'),
+  );
+}
 await cp(
   resolve(root, 'database/wechat-cloudrun-upgrade-006.sql'),
   resolve(project, '数据库升级006.sql'),

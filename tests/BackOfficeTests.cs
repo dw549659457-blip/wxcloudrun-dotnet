@@ -5,6 +5,7 @@ using aspnetapp.Domain;
 using aspnetapp.Infrastructure;
 using aspnetapp.Services;
 using ClosedXML.Excel;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using static Business.Tests.TestFixture;
 
@@ -35,6 +36,128 @@ public sealed class BackOfficeTests(TestFixture fixture) : IClassFixture<TestFix
         response.EnsureSuccessStatusCode();
         return await Json(response);
     }
+    private static UserInput Employee(string[]? roles = null) => new("person-" + Guid.NewGuid().ToString("N"), "职级测试员工",
+        "139" + RandomNumberGenerator.GetInt32(10000000, 99999999), roles ?? [Roles.Worker]);
+    [Fact]
+    public async Task Backoffice_manager_manages_operational_staff_and_records_changes()
+    {
+        using var manager = await Browser();
+        var input = Employee([Roles.Driver, Roles.Worker]);
+        var created = await Send(manager, HttpMethod.Post, "/api/users", input); created.EnsureSuccessStatusCode();
+        var id = (await Json(created)).GetProperty("id").GetInt64();
+        var changed = await Send(manager, HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Outbound], Enabled = false });
+        changed.EnsureSuccessStatusCode();
+        await using var connection = await fixture.Database.Open();
+        Assert.Equal([Roles.Outbound], await AuthService.UserRoles(connection, null, id));
+        var logs = await Json(await fixture.Clients["admin"].GetAsync("/api/audit-logs?requestId=" + changed.Headers.GetValues("X-Request-Id").Single()));
+        Assert.Equal("UPDATE_USER", logs.GetProperty("items")[0].GetProperty("action").GetString());
+        Assert.Equal(HttpStatusCode.Forbidden, (await Send(manager, HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Accountant], Password = Password })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await Send(manager, HttpMethod.Put, $"/api/users/{id}", input with { Password = Password })).StatusCode);
+    }
+    [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.Accountant)]
+    public async Task Manager_cannot_create_edit_disable_or_unbind_peer_or_higher_accounts(string role)
+    {
+        using var manager = await Browser();
+        var input = Employee([role]) with { Password = Password };
+        Assert.Equal(HttpStatusCode.Forbidden, (await Send(manager, HttpMethod.Post, "/api/users", input)).StatusCode);
+        var created = await Json(await Send(fixture.Clients["admin"], HttpMethod.Post, "/api/users", input));
+        var id = created.GetProperty("id").GetInt64();
+        Assert.Equal(HttpStatusCode.Forbidden, (await Send(manager, HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Worker], Enabled = false, Password = null })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await Send(manager, HttpMethod.Post, $"/api/auth/users/{id}/unbind", new ReverseInput("核实解绑"))).StatusCode);
+        using var employee = fixture.Factory.CreateClient();
+        var login = await Json(await Send(employee, HttpMethod.Post, "/api/auth/wechat-login", new WechatLoginInput(Guid.NewGuid().ToString("N"))));
+        var token = login.GetProperty("bindingToken").GetString()!;
+        var request = await Json(await Send(employee, HttpMethod.Post, "/api/auth/binding-requests", new BindingTokenInput(token)));
+        var requestId = request.GetProperty("requestId").GetInt64();
+        Assert.Equal(HttpStatusCode.Forbidden, (await Send(manager, HttpMethod.Post, $"/api/auth/binding-requests/{requestId}/approve", new BindingDecisionInput(id, "本人核实"))).StatusCode);
+        await using (var connection = await fixture.Database.Open())
+            await Database.Execute(connection, null, "UPDATE Bindings SET CandidateUserId=@user WHERE Id=@id", [("user", id), ("id", requestId)]);
+        var requests = await Json(await manager.GetAsync("/api/auth/binding-requests"));
+        Assert.DoesNotContain(requests.GetProperty("items").EnumerateArray(), item => item.GetProperty("id").GetInt64() == requestId);
+        Assert.Equal(HttpStatusCode.Forbidden, (await Send(manager, HttpMethod.Post, $"/api/auth/binding-requests/{requestId}/reject", new BindingDecisionInput(0, "未核实"))).StatusCode);
+        (await Send(fixture.Clients["admin"], HttpMethod.Put, $"/api/users/{id}", input with { Name = "管理员维护的账号", Password = null })).EnsureSuccessStatusCode();
+    }
+    [Fact]
+    public async Task Manager_approval_still_requires_employee_confirmation_and_unbind_revokes_session()
+    {
+        using var manager = await Browser();
+        var input = Employee();
+        var id = (await Json(await Send(manager, HttpMethod.Post, "/api/users", input))).GetProperty("id").GetInt64();
+        using var employee = fixture.Factory.CreateClient();
+        var login = await Json(await Send(employee, HttpMethod.Post, "/api/auth/wechat-login", new WechatLoginInput(Guid.NewGuid().ToString("N"))));
+        var token = login.GetProperty("bindingToken").GetString()!;
+        var request = await Json(await Send(employee, HttpMethod.Post, "/api/auth/binding-requests", new BindingTokenInput(token)));
+        var requestId = request.GetProperty("requestId").GetInt64();
+        (await manager.GetAsync("/api/auth/binding-requests")).EnsureSuccessStatusCode();
+        (await Send(manager, HttpMethod.Post, $"/api/auth/binding-requests/{requestId}/approve", new BindingDecisionInput(id, "线下核实本人"))).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await employee.GetAsync("/api/auth/me")).StatusCode);
+        var confirmed = await Json(await Send(employee, HttpMethod.Post, "/api/auth/confirm-binding", new BindingTokenInput(token)));
+        employee.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", confirmed.GetProperty("token").GetString());
+        (await employee.GetAsync("/api/auth/me")).EnsureSuccessStatusCode();
+        (await Send(manager, HttpMethod.Post, $"/api/auth/users/{id}/unbind", new ReverseInput("员工更换微信"))).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await employee.GetAsync("/api/auth/me")).StatusCode);
+        employee.DefaultRequestHeaders.Authorization = null;
+        login = await Json(await Send(employee, HttpMethod.Post, "/api/auth/wechat-login", new WechatLoginInput(Guid.NewGuid().ToString("N"))));
+        token = login.GetProperty("bindingToken").GetString()!;
+        request = await Json(await Send(employee, HttpMethod.Post, "/api/auth/binding-requests", new BindingTokenInput(token)));
+        requestId = request.GetProperty("requestId").GetInt64();
+        (await Send(manager, HttpMethod.Post, $"/api/auth/binding-requests/{requestId}/reject", new BindingDecisionInput(0, "未能核实"))).EnsureSuccessStatusCode();
+        var rejected = await Send(employee, HttpMethod.Post, "/api/auth/confirm-binding", new BindingTokenInput(token));
+        Assert.Equal(HttpStatusCode.Unauthorized, rejected.StatusCode);
+        Assert.Equal("BINDING_EXPIRED", (await Json(rejected)).GetProperty("code").GetString());
+    }
+    [Fact]
+    public async Task Personnel_query_is_fixed_while_other_business_permissions_remain_configurable()
+    {
+        using var manager = await Browser();
+        await Configure([]);
+        (await manager.GetAsync("/api/users")).EnsureSuccessStatusCode();
+        (await manager.GetAsync("/api/auth/binding-requests")).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Forbidden, (await manager.GetAsync("/api/exports/users")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await manager.GetAsync("/api/inventory/packaging")).StatusCode);
+        var policy = await Json(await fixture.Clients["admin"].GetAsync("/api/backoffice-permissions"));
+        Assert.Contains("users.read", policy.GetProperty("permissions").EnumerateArray().Select(x => x.GetString()));
+        Assert.True(policy.GetProperty("catalog").EnumerateArray().Single(x => x.GetProperty("key").GetString() == "users.read").GetProperty("fixed").GetBoolean());
+    }
+    [Fact]
+    public async Task Mini_accountant_session_does_not_gain_personnel_management()
+    {
+        using var manager = await Browser();
+        var identity = await Json(await manager.GetAsync("/api/auth/me"));
+        await using var connection = await fixture.Database.Open();
+        var username = (await Database.Query(connection, null, "SELECT Username FROM Users WHERE Id=@id", ("id", identity.GetProperty("id").GetInt64())))[0].Text("Username");
+        using var mini = fixture.Factory.CreateClient();
+        var login = await Json(await Send(mini, HttpMethod.Post, "/api/auth/dev-login", new LoginInput(username, Password)));
+        mini.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", login.GetProperty("token").GetString());
+        Assert.Equal(HttpStatusCode.Forbidden, (await mini.GetAsync("/api/auth/binding-requests")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await Send(mini, HttpMethod.Post, "/api/users", Employee())).StatusCode);
+    }
+    [Fact]
+    public async Task Promotion_to_backend_requires_an_independent_password()
+    {
+        var input = Employee() with { Password = Password };
+        var id = (await Json(await Send(fixture.Clients["admin"], HttpMethod.Post, "/api/users", input))).GetProperty("id").GetInt64();
+        Assert.Equal(HttpStatusCode.BadRequest, (await Send(fixture.Clients["admin"], HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Accountant], Password = null })).StatusCode);
+        (await Send(fixture.Clients["admin"], HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Accountant], Password = "Independent-backend-test-password" })).EnsureSuccessStatusCode();
+    }
+    [Fact]
+    public async Task Stale_privileged_actor_is_checked_again_inside_personnel_transaction()
+    {
+        var input = Employee([Roles.Admin]) with { Password = Password };
+        var id = (await Json(await Send(fixture.Clients["admin"], HttpMethod.Post, "/api/users", input))).GetProperty("id").GetInt64();
+        var stale = new Actor(id, input.Name, [Roles.Admin], SessionTypes.WebAdmin, "");
+        (await Send(fixture.Clients["admin"], HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Accountant], Password = null })).EnsureSuccessStatusCode();
+        var service = fixture.Factory.Services.GetRequiredService<ArchiveService>();
+        var denied = await Assert.ThrowsAsync<BusinessException>(() => service.SaveUser(stale, null, Employee() with { Password = Password }, "stale-manager-password"));
+        Assert.Equal(403, denied.Status);
+        denied = await Assert.ThrowsAsync<BusinessException>(() => service.SaveUser(stale, null, Employee([Roles.Admin]) with { Password = Password }, "stale-admin-role"));
+        Assert.Equal(403, denied.Status);
+        (await Send(fixture.Clients["admin"], HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Worker], Password = null })).EnsureSuccessStatusCode();
+        denied = await Assert.ThrowsAsync<BusinessException>(() => service.SaveUser(stale, null, Employee(), "stale-worker"));
+        Assert.Equal(403, denied.Status);
+    }
     [Fact]
     public async Task Accountant_reads_other_users_documents_all_stock_and_batches_and_exports_real_excel()
     {
@@ -64,7 +187,7 @@ public sealed class BackOfficeTests(TestFixture fixture) : IClassFixture<TestFix
         Assert.Equal(HttpStatusCode.Forbidden, (await fixture.Clients["worker1"].GetAsync("/api/exports/dispatches")).StatusCode);
     }
     [Fact]
-    public async Task Default_accountant_cannot_mutate_data_or_manage_security_even_by_direct_request()
+    public async Task Default_backoffice_manager_cannot_mutate_business_data_or_manage_higher_security()
     {
         var (packaging, _) = await fixture.Stock();
         var draft = await fixture.Create("admin", "stock-documents", new(new(2026, 10, 1), [new(packaging, 1)]), post: false);
@@ -82,8 +205,7 @@ public sealed class BackOfficeTests(TestFixture fixture) : IClassFixture<TestFix
             (HttpMethod.Get,"/api/backoffice-permissions",null),
             (HttpMethod.Get,"/api/audit-logs",null),
             (HttpMethod.Get,"/api/backoffice-operation-logs",null),
-            (HttpMethod.Get,"/api/backoffice-operation-logs/excel",null),
-            (HttpMethod.Get,"/api/auth/binding-requests",null) })
+            (HttpMethod.Get,"/api/backoffice-operation-logs/excel",null) })
             Assert.Equal(HttpStatusCode.Forbidden, (await Send(browser,request.Method,request.Path,request.Input)).StatusCode);
         var document = await Json(await fixture.Clients["admin"].GetAsync($"/api/stock-documents/{draft}"));
         Assert.Equal("DRAFT", document.GetProperty("document").GetProperty("status").GetString());

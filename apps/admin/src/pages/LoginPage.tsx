@@ -27,7 +27,7 @@ export function LoginPage() {
         <ErrorNotice message={error} />
         <Form layout="vertical" onFinish={submit} requiredMark={false}>
           <Form.Item
-            label="后台账号（管理员 / 会计）"
+            label="后台账号（管理员 / 后台管理员）"
             name="username"
             rules={[{ required: true, message: '请输入后台账号' }]}
           >
@@ -44,7 +44,7 @@ export function LoginPage() {
             进入管理后台
           </Button>
         </Form>
-        <p className="muted">管理员和会计使用后台账号。司机、工人和出库员请使用微信小程序。</p>
+        <p className="muted">管理员和后台管理员使用后台账号。司机、工人和出库员请使用微信小程序。</p>
       </section>
     </main>
   );

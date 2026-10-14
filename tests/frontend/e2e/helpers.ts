@@ -8,7 +8,7 @@ export async function testPassword(): Promise<string> {
 }
 export async function adminLogin(page: Page, path = '/admin/dashboard') {
   await page.goto(path);
-  await page.getByLabel('后台账号（管理员 / 会计）').fill('admin');
+  await page.getByLabel('后台账号（管理员 / 后台管理员）').fill('admin');
   await page.getByLabel('密码', { exact: true }).fill(await testPassword());
   await page.getByRole('button', { name: '进入管理后台' }).click();
   await expect(page.getByRole('button', { name: '退出登录' })).toBeVisible();

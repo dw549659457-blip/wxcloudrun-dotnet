@@ -1,20 +1,22 @@
-# 小程序1.2.1工程下载
+# 小程序1.2.2工程下载
 
-[下载1.2.1管理员动态试上线版 ZIP](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/vegetable-miniprogram-1.2.1.zip)
+[下载1.2.2工程ZIP](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/vegetable-miniprogram-1.2.2.zip)
 
-如果直接链接不能下载，登录有仓库访问权限的GitHub账号，打开本目录的 `vegetable-miniprogram-1.2.1.zip` 文件页面，点击 **Download raw file（下载原始文件）**。不要对Codex的 `/workspace/…` 工作区链接使用浏览器“另存为”。
+如果链接不能下载，登录有仓库访问权限的GitHub账号，打开ZIP文件页面，点击Download raw file（下载原始文件）。不要对Codex工作区链接使用浏览器“另存为”。
 
-已有业务库先执行包内 **数据库升级006.sql**。该脚本要求001—005已安装；缺005时先执行包内005。保留原账号、库存与单据，不要重跑首次初始化SQL。Git流水线部署新后台后，用原管理员账号填写本人手机号，在小程序绑定本人微信即可进入管理员工作台。
+本次将原会计显示名称改为后台管理员，保持ACCOUNTANT标识、账号密码和已有业务权限配置。网页后台新增下级员工建档、岗位分配、启用/停用、解绑与开通审批；同级和上级后台账号仍由最高管理员维护。已有005/006的业务库无需新增SQL。详见[职级说明](../docs/backoffice-role-hierarchy.md)。
 
-解压后导入同时含 `project.config.json` 和 `miniprogram` 的 **vegetable-miniprogram** 文件夹。AppID、envId和服务名已填好；无需构建npm，开发登录关闭。“我的身份”和上传版本号均为 **1.2.1**。
+解压后导入同时含project.config.json和miniprogram的vegetable-miniprogram文件夹。AppID、envId和服务名已预填，开发登录关闭，不需要构建npm。版本号为1.2.2，包含14个页面和2个组件；附带后台管理员职级说明及数据维护填写表。
 
-管理员页面约5秒更新装菜、回收入库、发货出库等动态，支持个人未读和完整明细。微信订阅通知已默认配置真实模板74963，新后台部署后启用；旧空环境变量需删除或填写包内配置。普通一次性订阅每次授权对应下一笔新变动。具体步骤见包内发布试上线说明。
+最高管理员小程序库存动态、未读数及微信订阅提醒沿用原功能，后台管理员仍使用网页后台。旧升级脚本仅供尚未安装005/006的数据库使用，不要重跑首次初始化SQL。
 
-包内 `工程信息.json` 记录源码提交版本，包含14个页面和2个组件。51项前端用例、68项C#用例、11项编译包/API/MySQL及浏览器端到端用例、124项浏览器映射布局检查通过。真实微信模板推送、原生渲染、键盘与上传发布须在体验版验收。
+重新构建后验证：76项C#测试、51项前端测试、12项浏览器端到端测试、124个小程序浏览器布局场景均通过，类型检查、构建和SQL一致性检查通过。浏览器映射检查不能替代真实微信原生渲染、订阅推送和真机验收。
 
-同目录 `vegetable-miniprogram-import.zip` 与1.2.1文件内容相同。旧1.1.0和1.2.0包保留为历史版本。
+同目录vegetable-miniprogram-import.zip与1.2.2包内容相同，旧工程包和1.2.1手册保留为历史资料。
 
-## 审核描述与图文使用手册
+## 历史1.2.1图文使用手册
+
+历史手册中的“会计”名称和人员管理范围以[当前职级说明](../docs/backoffice-role-hierarchy.md)为准。
 
 - [下载PDF手册](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/user-manual-1.2.1.pdf)：22页、31张图，可打印或转发给员工。
 - [下载完整使用资料ZIP](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/user-manual-1.2.1.zip)：PDF、可离线浏览的HTML、116字符审核描述、审核填写说明及可编辑图文源稿。
@@ -28,7 +30,7 @@
 
 ## 上线前基础数据维护Excel
 
-[下载管理员数据维护表](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/prelaunch-data-maintenance-1.2.1.xlsx)。
+[下载管理员数据维护表](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/prelaunch-data-maintenance-1.2.2.xlsx)。
 
 11个可见工作表：维护指导、清单、人员账号、棚户、包装、蔬菜、客户、期初盘点、未结任务、上线核对与填写示例。填写区留空，示例另放；支持下拉、手机号文本格式、唯一性辅助校验及自动差额。密码只记录设置状态，不填写真实值。
 

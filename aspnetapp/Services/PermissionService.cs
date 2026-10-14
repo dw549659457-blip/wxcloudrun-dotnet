@@ -13,7 +13,7 @@ public sealed class PermissionService(Database database, TransactionService tran
         if (!roles.Contains(Roles.Accountant)) return [];
         var rows = await Database.Query(connection, transaction,
             "SELECT PermissionKey FROM BackOfficeRolePermissions WHERE Role='ACCOUNTANT' ORDER BY PermissionKey");
-        return rows.Select(row => row.Text("PermissionKey")).ToArray();
+        return rows.Select(row => row.Text("PermissionKey")).Concat(BackOfficePermissions.Fixed).Distinct().Order(StringComparer.Ordinal).ToArray();
     }
     public async Task<object> Read(Actor actor)
     {
@@ -29,7 +29,7 @@ public sealed class PermissionService(Database database, TransactionService tran
         if (input.Permissions is null || input.Permissions.Any(key => !BackOfficePermissions.All.Contains(key))
             || string.IsNullOrWhiteSpace(input.Reason) || input.Reason.Length > 500)
             throw BusinessException.Invalid("请选择有效权限并填写调整原因");
-        var permissions = input.Permissions.Distinct().Order(StringComparer.Ordinal).ToArray();
+        var permissions = input.Permissions.Concat(BackOfficePermissions.Fixed).Distinct().Order(StringComparer.Ordinal).ToArray();
         foreach (var key in permissions.Where(key => !key.EndsWith(".read", StringComparison.Ordinal)))
             if (!permissions.Contains(key.Split('.')[0] + ".read"))
                 throw BusinessException.Invalid("导出或业务操作权限必须同时保留对应查询权限");

@@ -68,7 +68,9 @@ public sealed class ArchiveService(TransactionService transactions, DocumentRepo
     }
     public Task<object> SaveUser(Actor actor, long? id, UserInput input, string requestId)
     {
-        actor.Require(Roles.Admin);
+        actor.RequirePersonnelManagement();
+        PersonnelManagement.RequirePasswordAuthority(actor, input.Password);
+        PersonnelManagement.RequireScope(actor, input.Roles ?? []);
         if (string.IsNullOrWhiteSpace(input.Name) || input.Name.Length > 80 || input.Username.Length is < 1 or > 80 || input.Roles is null || input.Roles.Length == 0 || input.Roles.Any(role => !Roles.All.Contains(role)))
         {
             throw BusinessException.Invalid("请输入姓名、唯一账号和有效角色");
@@ -86,12 +88,14 @@ public sealed class ArchiveService(TransactionService transactions, DocumentRepo
 
         if (id is null && Roles.BackOffice(input.Roles) && input.Password is null)
         {
-            throw BusinessException.Invalid("管理员或会计需设置独立密码");
+            throw BusinessException.Invalid("管理员或后台管理员需设置独立密码");
         }
 
         var passwordHash = input.Password is null ? null : PasswordService.Hash(input.Password);
         return transactions.Run<object>(async (connection, transaction) =>
         {
+            actor = await PersonnelManagement.RequireCurrent(connection, transaction, actor, input.Roles);
+            PersonnelManagement.RequirePasswordAuthority(actor, input.Password);
             Row? previous = null;
             string[]? previousRoles = null;
             if (id is null)
@@ -108,6 +112,9 @@ public sealed class ArchiveService(TransactionService transactions, DocumentRepo
 
                 previous = rows[0];
                 previousRoles = await AuthService.UserRoles(connection, transaction, id.Value);
+                PersonnelManagement.RequireScope(actor, previousRoles);
+                if (Roles.BackOffice(input.Roles) && !Roles.BackOffice(previousRoles) && passwordHash is null)
+                    throw BusinessException.Invalid("升级为后台账号需设置独立密码");
                 if (Roles.BackOffice(input.Roles) && passwordHash is null && previous.IsNull("PasswordHash"))
                 {
                     throw BusinessException.Invalid("后台账号需要密码");

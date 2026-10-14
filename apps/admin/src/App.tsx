@@ -70,13 +70,13 @@ export function App() {
     window.scrollTo(0, 0);
   }
   const isAdmin = auth.user?.roles.includes('ADMIN') ?? false;
+  const canManagePeople = isAdmin || (auth.user?.roles.includes('ACCOUNTANT') ?? false);
   function allowed(target: string): boolean {
-    if (
-      target.includes('/permissions') ||
-      target.includes('/bindings') ||
-      target.includes('/audit')
-    ) {
+    if (target.includes('/permissions') || target.includes('/audit')) {
       return isAdmin;
+    }
+    if (target.includes('/bindings')) {
+      return canManagePeople;
     }
     if (target.includes('/users')) {
       return auth.can('users.read');
@@ -101,7 +101,11 @@ export function App() {
   function content() {
     if (!allowed(path)) {
       return (
-        <Result status="403" title="当前账号没有此页面权限" subTitle="请联系管理员调整会计权限。" />
+        <Result
+          status="403"
+          title="当前账号没有此页面权限"
+          subTitle="请联系管理员调整后台管理员权限。"
+        />
       );
     }
     if (path === '/admin/permissions') {
@@ -160,7 +164,7 @@ export function App() {
       label: '员工与身份',
       children: [
         { key: '/admin/users', label: '员工与角色' },
-        ...(isAdmin ? [{ key: '/admin/bindings', label: '开通协助审批' }] : []),
+        ...(canManagePeople ? [{ key: '/admin/bindings', label: '开通协助审批' }] : []),
       ],
     },
     {
@@ -180,7 +184,7 @@ export function App() {
       })),
     },
     { key: '/admin/batches', label: '业务批次查询' },
-    { key: '/admin/permissions', label: '会计权限配置' },
+    { key: '/admin/permissions', label: '后台管理员权限配置' },
     { key: '/admin/audit', label: '管理审计' },
   ].filter((item) => {
     if (item.key === 'people') {
@@ -241,7 +245,7 @@ export function App() {
               <Button onClick={() => setCollapsed(!collapsed)}>菜单</Button>
               <div>
                 <b>{auth.user.name}</b>
-                <span className="muted"> · {isAdmin ? '管理员' : '会计'}</span>
+                <span className="muted"> · {isAdmin ? '管理员' : '后台管理员'}</span>
                 <Button
                   type="text"
                   onClick={() => {

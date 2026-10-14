@@ -120,9 +120,9 @@ public sealed class QueryRepository(Database database, AppSettings settings)
     }
     public async Task<object> BindingRequests(Actor actor, PageQuery query)
     {
-        actor.Require(Roles.Admin); Validate(query);
+        actor.RequirePersonnelManagement(); Validate(query);
         await using var connection = await database.Open();
-        var rows = await Database.Query(connection, null, "SELECT Id,Status,CandidateUserId,ApprovedBy,Reason,ExpiresAt,CreatedAt FROM Bindings WHERE Status IN ('PENDING_APPROVAL','APPROVED','REJECTED') ORDER BY Id DESC LIMIT @limit OFFSET @offset", ("limit", query.PageSize), ("offset", (query.Page - 1) * query.PageSize));
+        var rows = await Database.Query(connection, null, "SELECT Id,Status,CandidateUserId,ApprovedBy,Reason,ExpiresAt,CreatedAt FROM Bindings b WHERE Status IN ('PENDING_APPROVAL','APPROVED','REJECTED') AND (@admin=TRUE OR NOT EXISTS (SELECT 1 FROM UserRoles r WHERE r.UserId=b.CandidateUserId AND r.Role IN ('ADMIN','ACCOUNTANT'))) ORDER BY Id DESC LIMIT @limit OFFSET @offset", ("admin", actor.IsAdmin), ("limit", query.PageSize), ("offset", (query.Page - 1) * query.PageSize));
         return new { items = rows.Select(row => row.Output()), query.Page, query.PageSize };
     }
 

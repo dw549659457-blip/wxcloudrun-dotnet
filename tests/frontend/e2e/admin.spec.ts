@@ -16,7 +16,7 @@ test('深层管理路由可刷新；API 404 和非管理员权限仍由后台判
   const missing = await request.get('/api/no-such-api');
   expect(missing.status()).toBe(404);
   expect(missing.headers()['content-type']).toContain('application/json');
-  await page.getByLabel('后台账号（管理员 / 会计）').fill('worker1');
+  await page.getByLabel('后台账号（管理员 / 后台管理员）').fill('worker1');
   await page.getByLabel('密码', { exact: true }).fill(await testPassword());
   const denied = page.waitForResponse((response) =>
     response.url().endsWith('/api/auth/admin-login'),

@@ -4,7 +4,10 @@ import { friendlyError, type BindingRequest, type UserRecord } from '@warehouse/
 import { allPages, api } from '../api/client';
 import { ErrorNotice, PageControls, PageHeading, StatusTag, timeText } from '../components/Common';
 import { usePagedQuery } from '../hooks/usePagedQuery';
+import { useAuth } from '../hooks/useAuth';
 export function BindingsPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.roles.includes('ADMIN') ?? false;
   const data = usePagedQuery<BindingRequest>('/api/auth/binding-requests');
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [selection, setSelection] = useState<{ request: BindingRequest; approve: boolean } | null>(
@@ -55,7 +58,7 @@ export function BindingsPage() {
     <>
       <PageHeading
         title="员工开通协助"
-        description="员工本人微信发起申请后，管理员在线下核实本人。批准后仍需员工点“是我，进入”，申请本身没有业务权限。"
+        description="员工本人微信发起申请后，管理员或后台管理员在线下核实本人。批准后仍需员工点“是我，进入”，申请本身没有业务权限。后台管理员仅审批下级员工。"
         extra={<Button onClick={data.reload}>刷新申请</Button>}
       />
       <ErrorNotice message={data.error || error} />
@@ -114,7 +117,15 @@ export function BindingsPage() {
               value={userId}
               onChange={setUserId}
               options={users
-                .filter((user) => user.enabled && !user.bound)
+                .filter(
+                  (employee) =>
+                    employee.enabled &&
+                    !employee.bound &&
+                    (isAdmin ||
+                      !employee.roles
+                        .split(',')
+                        .some((role) => role === 'ADMIN' || role === 'ACCOUNTANT')),
+                )
                 .map((user) => ({ value: user.id, label: `${user.name} · ${user.phone}` }))}
             />
           </label>

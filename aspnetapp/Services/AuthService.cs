@@ -262,7 +262,7 @@ public sealed class AuthService(Database database, TransactionService transactio
     });
     public Task<object> Decide(Actor actor, long id, BindingDecisionInput decision, bool approve, string requestId)
     {
-        actor.Require(Roles.Admin);
+        actor.RequirePersonnelManagement();
         if (string.IsNullOrWhiteSpace(decision.Reason) || decision.Reason.Length > 500)
         {
             throw BusinessException.Invalid("请填写线下核实/拒绝理由");
@@ -276,8 +276,12 @@ public sealed class AuthService(Database database, TransactionService transactio
                 throw BusinessException.Conflict("BINDING_STATE", "申请不存在、过期或已处理");
             }
 
+            actor = await PersonnelManagement.RequireCurrent(connection, transaction, actor);
+            if (!rows[0].IsNull("CandidateUserId"))
+                PersonnelManagement.RequireScope(actor, await UserRoles(connection, transaction, rows[0].Id("CandidateUserId")));
             if (approve)
             {
+                PersonnelManagement.RequireScope(actor, await UserRoles(connection, transaction, decision.UserId));
                 var users = await Database.Query(connection, transaction, "SELECT * FROM Users WHERE Id=@id AND Enabled=TRUE FOR UPDATE", ("id", decision.UserId));
                 if (users.Count == 0 || !users[0].IsNull("OpenId"))
                 {
@@ -291,7 +295,7 @@ public sealed class AuthService(Database database, TransactionService transactio
     }
     public Task Unbind(Actor actor, long userId, string reason, string requestId)
     {
-        actor.Require(Roles.Admin);
+        actor.RequirePersonnelManagement();
         if (string.IsNullOrWhiteSpace(reason) || reason.Length > 500)
         {
             throw BusinessException.Invalid("解除绑定需填写核实原因");
@@ -299,6 +303,9 @@ public sealed class AuthService(Database database, TransactionService transactio
 
         return transactions.Run(async (connection, transaction) =>
         {
+            var users = await Database.Query(connection, transaction, "SELECT Id FROM Users WHERE Id=@id FOR UPDATE", ("id", userId));
+            if (users.Count == 0) throw new BusinessException(404, "NOT_FOUND", "未找到用户");
+            actor = await PersonnelManagement.RequireCurrent(connection, transaction, actor, await UserRoles(connection, transaction, userId));
             await Database.Execute(connection, transaction, "UPDATE Bindings b JOIN Users u ON u.AppId=b.AppId AND u.OpenId=b.OpenId SET b.Status='REVOKED' WHERE u.Id=@id", [("id", userId)]);
             await Database.Execute(connection, transaction, "UPDATE Users SET AppId=NULL,OpenId=NULL WHERE Id=@id", [("id", userId)]);
             await Database.Execute(connection, transaction, "UPDATE Sessions SET RevokedAt=UTC_TIMESTAMP(6) WHERE UserId=@id", [("id", userId)]);

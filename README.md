@@ -1,14 +1,16 @@
 # 包装流转与蔬菜出入库系统（微信云托管 / C#）
 
-**直接下载小程序工程**：[1.2.1 管理员动态试上线版 ZIP](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/vegetable-miniprogram-1.2.1.zip)。解压后直接导入微信开发者工具，AppID 和云环境 ID 已填好；下载方法见 [交付目录](deliverables/README.md)。
+**直接下载小程序工程**：[1.2.2 后台管理员职级版 ZIP](https://github.com/dw549659457-blip/wxcloudrun-dotnet/raw/refs/heads/main/deliverables/vegetable-miniprogram-1.2.2.zip)。解压后直接导入微信开发者工具，AppID 和云环境 ID 已填好；下载方法见 [交付目录](deliverables/README.md)。
 
 **图文使用资料**：[22页PDF使用手册](deliverables/user-manual-1.2.1.pdf) · [PDF/网页版/审核资料下载包](deliverables/user-manual-1.2.1.zip) · [审核版本描述与填写说明](docs/review-submission-1.2.1.md)。覆盖后台添加用户、本人微信绑定及各岗位完整操作，含31张演示截图。
 
-**上线前数据维护**：[下载基础数据维护Excel](deliverables/prelaunch-data-maintenance-1.2.1.xlsx) · [维护顺序与填表说明](docs/prelaunch-data-maintenance.md)。先整理人员、棚户、包装、蔬菜、客户，再复核期初和未结任务。
+**上线前数据维护**：[下载基础数据维护Excel](deliverables/prelaunch-data-maintenance-1.2.2.xlsx) · [维护顺序与填表说明](docs/prelaunch-data-maintenance.md)。先整理人员、棚户、包装、蔬菜、客户，再复核期初和未结任务。
+
+原1.2.1图文手册作为历史资料保留；角色名称及员工管理权限以[当前职级说明](docs/backoffice-role-hierarchy.md)为准。
 
 本仓库在用户现有 `wxcloudrun-dotnet` 模板中实现业务后台，按用户确认继续使用 **C# + ASP.NET Core**，升级至 **.NET 10 LTS**，使用 MySQL/InnoDB、MySqlConnector 参数化 SQL 和 C# decimal。原云托管 Dockerfile 入口、80 容器端口和 MySQL 配置名保持兼容；原计数器接口已由真实业务接口替代，原库和云服务版本不被修改。
 
-已提供后台 API、React 管理后台、原生微信小程序、数据库迁移与测试。管理后台构建后由同一 .NET 服务在 `/admin/` 提供；小程序从 `apps/miniprogram` 导入微信开发者工具。前端安装/配置见 [frontend-setup.md](docs/frontend-setup.md)，员工指引见 [employee-quickstart.md](docs/employee-quickstart.md)，管理员图文指引见 [admin-quickstart.md](docs/admin-quickstart.md)。用户已反馈整体联通正常；逐岗位试用与真机显示检查见 [1.2.1发布说明](docs/miniprogram-release-1.2.1.md)。
+已提供后台 API、React 管理后台、原生微信小程序、数据库迁移与测试。管理后台构建后由同一 .NET 服务在 `/admin/` 提供；小程序从 `apps/miniprogram` 导入微信开发者工具。前端安装/配置见 [frontend-setup.md](docs/frontend-setup.md)，员工指引见 [employee-quickstart.md](docs/employee-quickstart.md)，管理员图文指引见 [admin-quickstart.md](docs/admin-quickstart.md)。用户已反馈整体联通正常；逐岗位试用与真机显示检查见 [1.2.2发布说明](docs/miniprogram-release-1.2.2.md)。
 
 已有业务库启用管理员动态，先执行 [006升级SQL](database/wechat-cloudrun-upgrade-006.sql)，保留已有账号及业务数据。微信订阅提醒已默认配置用户提供的模板74963，云托管部署和体验验证步骤见1.2.1发布说明。
 
@@ -39,7 +41,7 @@ bash scripts/dev.sh run
 
 开发账号：admin、driver1、driver2、worker1、worker2、outbound1，密码均为你设置的 `DEV_SEED_PASSWORD`。种子不覆盖既有账号密码、不初始化库存，重复运行只补充缺失档案。开发登录使用 `POST /api/auth/dev-login`，登录响应令牌仅作本地验收；`Production`、`Staging` 等非 Development 环境拒绝开发登录开关。
 
-开发管理端用另一个终端运行 `pnpm dev:admin`，访问 `http://localhost:5173/admin/`；默认代理后台8080，使用管理员或会计账号密码登录。`pnpm build:admin` 后，后台地址的 `/admin/` 也可直接访问。小程序先填写真实 AppID 和 `src/config/local.ts` 的 envId，再运行 `pnpm build:miniprogram` 并导入 `apps/miniprogram`。
+开发管理端用另一个终端运行 `pnpm dev:admin`，访问 `http://localhost:5173/admin/`；默认代理后台8080，使用管理员或后台管理员账号密码登录。`pnpm build:admin` 后，后台地址的 `/admin/` 也可直接访问。小程序先填写真实 AppID 和 `src/config/local.ts` 的 envId，再运行 `pnpm build:miniprogram` 并导入 `apps/miniprogram`。
 
 本地运行端口由 `.env.local` 的 `PORT=8080` 指定。用本地 HTTP 请求检查 `/health/live`、`/health/ready`。开发模式 `/swagger/` 提供 OpenAPI；生产关闭 Swagger，固定接口契约见 [docs/openapi.json](docs/openapi.json) 和 [docs/api.md](docs/api.md)。
 
@@ -65,8 +67,8 @@ docker compose up -d mysql
 
 ## 3. 主要能力
 
-- 内部预注册员工与多角色：管理员、会计 Cookie/CSRF，小程序数据库哈希令牌，账号停用/角色变更撤销会话。
-- 会计默认全量查询及导出，业务写操作由管理员配置；后台查询、导出、修改、删除及拒绝操作全部留痕。升级与操作见 [会计权限和审计说明](docs/backoffice-permissions-audit.md)。
+- 内部预注册员工与多角色：管理员、后台管理员 Cookie/CSRF，小程序数据库哈希令牌，账号停用/角色变更撤销会话。
+- 后台管理员负责下级员工管理和开通审批，默认全量查询及导出，其他业务写操作由管理员配置；后台查询、导出、修改、删除及拒绝操作全部留痕。升级与操作见 [后台管理员权限和审计说明](docs/backoffice-permissions-audit.md)。
 - 微信 code2Session 验证、手机号换取、本人确认、管理员协助审批、解绑审计；不信任客户端身份头和角色。
 - 档案启停、历史快照；包装/蔬菜期初、补充、外来菜、库存调整流水。
 - 多棚户多包装下发、多人装菜、部分回收、最终回收、实收与产出差异、包装损耗。

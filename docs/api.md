@@ -122,3 +122,8 @@ lines含itemId/name/unit/domain/delta/balance；domain为WAREHOUSE_PACKAGING、E
 未升级006返回503/NOTIFICATIONS_NOT_READY，原记账继续工作；模板未配置时feed正常但subscription.configured=false，订阅返回503/NOTIFICATION_NOT_CONFIGURED。草稿不产生动态，成功正式入账/冲销与动态同事务；事务提交后后台领取微信发送任务，微信失败不改变库存。字段映射与发送状态见 [发布说明](miniprogram-release-1.2.0.md)。普通一次性订阅授权不等于持续推送资格，发送SENT只表示微信接收成功。
 
 1.2.1后台默认模板为74963“库存更新提醒”，字段映射`{"thing8":"actor","time3":"time","thing4":"summary"}`，可由服务环境变量覆盖；详见 [当前发布说明](miniprogram-release-1.2.1.md)。已存在的空模板/字段变量会覆盖默认值，需要删除或填写正确值。
+
+
+## 1.2.2人员职级
+
+ACCOUNTANT只更名显示为后台管理员，标识不变。WEB_ADMIN会话可维护下级员工及岗位、批准/拒绝下级绑定、解绑；同级和上级后台账号、后台密码仅ADMIN可维护。users.read固定保留，权限目录新增fixed字段；其他业务权限配置保持原样。详情见[职级说明](backoffice-role-hierarchy.md)。

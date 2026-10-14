@@ -28,6 +28,10 @@ public sealed record Actor(long Id, string Name, string[] Roles, string SessionT
 {
     public bool IsAdmin => Roles.Contains(Domain.Roles.Admin);
     public bool IsBackOffice => IsAdmin || (SessionType == SessionTypes.WebAdmin && Roles.Contains(Domain.Roles.Accountant));
+    public void RequirePersonnelManagement()
+    {
+        if (!IsBackOffice) throw new BusinessException(403, "FORBIDDEN", "您没有员工管理权限");
+    }
     public void RequirePermission(string permission)
     {
         if (!IsAdmin && (!IsBackOffice || !(Permissions ?? []).Contains(permission)))

@@ -75,6 +75,7 @@ export interface PermissionDefinition {
   module: string;
   label: string;
   defaultGranted: boolean;
+  fixed?: boolean;
 }
 export interface PermissionPolicy {
   role: 'ACCOUNTANT';

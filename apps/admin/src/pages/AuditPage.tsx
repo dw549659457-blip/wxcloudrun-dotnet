@@ -41,7 +41,7 @@ const actions: Record<string, string> = {
   CREATE_DRAFT: '创建草稿',
   EDIT_DRAFT: '修改草稿',
   DELETE_DRAFT: '删除草稿',
-  CONFIGURE_PERMISSIONS: '调整会计权限',
+  CONFIGURE_PERMISSIONS: '调整后台管理员权限',
   APPROVE_BINDING: '批准绑定',
   REJECT_BINDING: '拒绝绑定',
   UNBIND: '解除绑定',

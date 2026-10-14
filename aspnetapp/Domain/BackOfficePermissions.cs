@@ -1,6 +1,6 @@
 namespace aspnetapp.Domain;
 
-public sealed record PermissionDefinition(string Key, string Module, string Label, bool DefaultGranted);
+public sealed record PermissionDefinition(string Key, string Module, string Label, bool DefaultGranted, bool Fixed = false);
 public sealed record PermissionPolicyInput(int Version, string[] Permissions, string Reason);
 
 public static class BackOfficePermissions
@@ -10,7 +10,7 @@ public static class BackOfficePermissions
         new("archives.read", "基础档案", "查询", true),
         new("archives.export", "基础档案", "导出", true),
         new("archives.write", "基础档案", "新增、修改和停用", false),
-        new("users.read", "员工资料", "查询", true),
+        new("users.read", "员工资料", "查询（员工管理必需）", true, true),
         new("users.export", "员工资料", "导出", true),
         new("inventory.read", "库存", "查询", true),
         new("inventory.export", "库存", "导出", true),
@@ -28,5 +28,6 @@ public static class BackOfficePermissions
         new("reports.export", "台账报表", "导出", true),
         new("reconcile.read", "库存对账", "只读对账", true)
     ];
+    public static string[] Fixed => Catalog.Where(entry => entry.Fixed).Select(entry => entry.Key).ToArray();
     public static string[] All => Catalog.Select(entry => entry.Key).ToArray();
 }
