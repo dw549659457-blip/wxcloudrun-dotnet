@@ -1,0 +1,6 @@
+.record-number {
+  margin-top: 6px;
+  color: #51664f;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}

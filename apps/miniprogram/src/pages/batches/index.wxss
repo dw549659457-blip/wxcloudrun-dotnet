@@ -4,19 +4,12 @@
   text-align: left;
   font-weight: 400;
   font-size: 18px;
-  padding: 18px;
+  padding: 14px;
   box-sizing: border-box;
-  line-height: 1.7;
+  line-height: 1.5;
 }
 .search-card button {
   margin-top: 12px;
-}
-.batch-packaging {
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: #f5f8f3;
-  border-radius: 10px;
-  overflow-wrap: anywhere;
 }
 .batch-cta {
   display: flex;
@@ -24,11 +17,11 @@
   justify-content: space-between;
   color: #176747;
   font-weight: 600;
-  margin-top: 14px;
+  margin-top: 6px;
 }
 .batch-cta text {
   font-size: 28px;
 }
 .batch-detail {
-  margin-top: 24px;
+  margin-top: 14px;
 }

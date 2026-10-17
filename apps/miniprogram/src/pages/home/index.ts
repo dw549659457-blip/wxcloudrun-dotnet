@@ -2,7 +2,6 @@ import {
   friendlyError,
   roleLabels,
   type Batch,
-  type EmployeeSession,
   type Role,
 } from '@warehouse/contracts';
 import { requireSession, saveSession } from '../../services/session';
@@ -19,10 +18,11 @@ Page({
     error: '',
     pendingCount: 0,
     pendingBatches: [] as (Batch & { date: string })[],
-    guided: false,
+    overviewLoading: false,
+    overviewError: '',
   },
   async onShow() {
-    this.setData({ loading: true, error: '' });
+    this.setData({ loading: true, error: '', pendingCount: 0, pendingBatches: [], overviewLoading: false, overviewError: '' });
     try {
       const session = await requireSession();
       if (!session) {
@@ -61,19 +61,24 @@ Page({
         role: selected ?? '',
         roleName: selected ? roleLabels[selected] : '',
         selecting: !selected,
-        guided: selected
-          ? !wx.getStorageSync(`warehouse:guide:${session.userId}:${selected}`)
-          : false,
+        loading: false,
+        overviewLoading: selected === 'DRIVER' || selected === 'WORKER',
       });
       if (selected === 'DRIVER' || selected === 'WORKER') {
-        const batches = await allPages<Batch>('/api/batches');
-        this.setData({
-          pendingCount: batches.filter((batch) => batch.status === 'OPEN').length,
-          pendingBatches: batches
-            .filter((batch) => batch.status === 'OPEN')
-            .slice(0, 3)
-            .map((batch) => ({ ...batch, date: batch.businessDate.slice(0, 10) })),
-        });
+        try {
+          const batches = await allPages<Batch>('/api/batches');
+          const open = batches.filter((batch) => batch.status === 'OPEN');
+          this.setData({
+            pendingCount: open.length,
+            pendingBatches: open
+              .slice(0, 3)
+              .map((batch) => ({ ...batch, date: batch.businessDate.slice(0, 10) })),
+          });
+        } catch (failure) {
+          this.setData({ overviewError: `任务概览暂时无法读取：${friendlyError(failure)}` });
+        } finally {
+          this.setData({ overviewLoading: false });
+        }
       }
     } catch (failure) {
       this.setData({ error: friendlyError(failure) });
@@ -100,14 +105,6 @@ Page({
   },
   navigate(event: TapEvent) {
     wx.navigateTo({ url: String(event.currentTarget.dataset.url) });
-  },
-  dismissGuide() {
-    const session = getApp<{ globalData: { session: EmployeeSession | null } }>().globalData
-      .session;
-    if (session) {
-      wx.setStorageSync(`warehouse:guide:${session.userId}:${this.data.role}`, true);
-    }
-    this.setData({ guided: false });
   },
   retry() {
     void this.onShow();

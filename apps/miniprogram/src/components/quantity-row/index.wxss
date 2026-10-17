@@ -1,17 +1,17 @@
 .quantity-card {
-  padding: 14px;
-  margin: 12px 0;
+  padding: 10px;
+  margin: 8px 0;
   border: 1px solid #d3e0cf;
-  border-radius: 16px;
+  border-radius: 12px;
   background: white;
   font-size: 18px;
   color: #20382b;
   box-sizing: border-box;
-  line-height: 1.6;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 .choice {
-  padding: 12px 8px;
+  padding: 10px 8px;
   min-height: 48px;
   box-sizing: border-box;
   font-size: 20px;
@@ -21,18 +21,18 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 .step-button {
   flex: 0 0 48px;
   width: 48px;
-  min-height: 64px;
+  min-height: 52px;
   padding: 0;
   margin: 0;
   font-size: 24px;
   background: #edf5e9;
   color: #26462d;
-  line-height: 64px;
+  line-height: 52px;
   border-radius: 12px;
 }
 .quantity-input {
@@ -42,7 +42,7 @@
   border: 1px solid #aebfaf;
   border-radius: 12px;
   padding: 8px;
-  height: 64px;
+  height: 52px;
   line-height: 1.4;
   box-sizing: border-box;
   color: #176747;
@@ -56,11 +56,11 @@
 .remove {
   font-size: 18px;
   min-height: 48px;
-  line-height: 48px;
-  background: #fff;
+  line-height: 1.4;
+  background: #fff2ed;
   color: #7e3528;
-  margin: 10px 0 0;
-  padding: 0;
+  margin: 0;
+  padding: 4px 10px;
 }
 
 .type-choices {
@@ -72,9 +72,9 @@
   width: calc(50% - 4px);
   box-sizing: border-box;
   font-size: 20px;
-  min-height: 72px;
-  line-height: 1.5;
-  padding: 12px;
+  min-height: 54px;
+  line-height: 1.4;
+  padding: 8px;
   margin: 0;
   background: white;
   color: #26462d;
@@ -87,14 +87,15 @@
   border: 2px solid #176747;
   background: #edf6e9;
 }
-.row-heading {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 12px;
+.quantity-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
 }
 .quantity-label {
   font-size: 18px;
-  margin-top: 14px;
   color: #39583d;
 }
 .selected-label {
@@ -112,7 +113,8 @@
   border: 0;
 }
 .remove {
-  width: 100%;
+  width: auto;
+  flex: 0 0 auto;
   border-radius: 10px;
   font-weight: 400;
 }

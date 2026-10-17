@@ -13,7 +13,7 @@ namespace Business.Tests;
 
 public sealed class BackOfficeTests(TestFixture fixture) : IClassFixture<TestFixture>
 {
-    private const string Password = "Accountant-test-password-2026";
+    private static readonly string Password = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     private async Task<HttpClient> Browser(string role = Roles.Accountant)
     {
         if (role == Roles.Accountant) await Configure(BackOfficePermissions.Catalog.Where(entry => entry.DefaultGranted).Select(entry => entry.Key).ToArray());
@@ -122,6 +122,42 @@ public sealed class BackOfficeTests(TestFixture fixture) : IClassFixture<TestFix
         Assert.True(policy.GetProperty("catalog").EnumerateArray().Single(x => x.GetProperty("key").GetString() == "users.read").GetProperty("fixed").GetBoolean());
     }
     [Fact]
+    public async Task Backoffice_manager_cannot_see_admin_accounts_in_users_or_export()
+    {
+        using var manager = await Browser();
+        var admin = Employee([Roles.Admin]) with { Password = Password };
+        var mixed = Employee([Roles.Admin, Roles.Driver]) with { Password = Password };
+        var worker = Employee([Roles.Worker]);
+        foreach (var input in new[] { admin, mixed, worker })
+            (await Send(fixture.Clients["admin"], HttpMethod.Post, "/api/users", input)).EnsureSuccessStatusCode();
+
+        var adminRows = await Json(await fixture.Clients["admin"].GetAsync("/api/users?pageSize=100"));
+        Assert.Contains(adminRows.GetProperty("items").EnumerateArray(), item => item.GetProperty("username").GetString() == admin.Username);
+        Assert.Contains(adminRows.GetProperty("items").EnumerateArray(), item => item.GetProperty("username").GetString() == mixed.Username);
+
+        var firstPage = await Json(await manager.GetAsync("/api/users?pageSize=1"));
+        Assert.Single(firstPage.GetProperty("items").EnumerateArray());
+        var visible = new List<string>();
+        for (var page = 1; page <= 20; page++)
+        {
+            var response = await Json(await manager.GetAsync($"/api/users?page={page}&pageSize=100"));
+            var items = response.GetProperty("items").EnumerateArray().ToArray();
+            visible.AddRange(items.Select(item => item.GetProperty("username").GetString()!));
+            if (items.Length < 100) break;
+        }
+        Assert.Contains(worker.Username, visible);
+        Assert.DoesNotContain(admin.Username, visible);
+        Assert.DoesNotContain(mixed.Username, visible);
+
+        var export = await manager.GetAsync("/api/exports/users");
+        export.EnsureSuccessStatusCode();
+        using var workbook = new XLWorkbook(new MemoryStream(await export.Content.ReadAsByteArrayAsync()));
+        var cells = workbook.Worksheet("明细").CellsUsed().Select(cell => cell.GetString()).ToArray();
+        Assert.Contains(worker.Username, cells);
+        Assert.DoesNotContain(admin.Username, cells);
+        Assert.DoesNotContain(mixed.Username, cells);
+    }
+    [Fact]
     public async Task Mini_accountant_session_does_not_gain_personnel_management()
     {
         using var manager = await Browser();
@@ -140,7 +176,7 @@ public sealed class BackOfficeTests(TestFixture fixture) : IClassFixture<TestFix
         var input = Employee() with { Password = Password };
         var id = (await Json(await Send(fixture.Clients["admin"], HttpMethod.Post, "/api/users", input))).GetProperty("id").GetInt64();
         Assert.Equal(HttpStatusCode.BadRequest, (await Send(fixture.Clients["admin"], HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Accountant], Password = null })).StatusCode);
-        (await Send(fixture.Clients["admin"], HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Accountant], Password = "Independent-backend-test-password" })).EnsureSuccessStatusCode();
+        (await Send(fixture.Clients["admin"], HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Accountant], Password = Convert.ToHexString(RandomNumberGenerator.GetBytes(24)) })).EnsureSuccessStatusCode();
     }
     [Fact]
     public async Task Stale_privileged_actor_is_checked_again_inside_personnel_transaction()
@@ -150,9 +186,9 @@ public sealed class BackOfficeTests(TestFixture fixture) : IClassFixture<TestFix
         var stale = new Actor(id, input.Name, [Roles.Admin], SessionTypes.WebAdmin, "");
         (await Send(fixture.Clients["admin"], HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Accountant], Password = null })).EnsureSuccessStatusCode();
         var service = fixture.Factory.Services.GetRequiredService<ArchiveService>();
-        var denied = await Assert.ThrowsAsync<BusinessException>(() => service.SaveUser(stale, null, Employee() with { Password = Password }, "stale-manager-password"));
+        var denied = await Assert.ThrowsAsync<BusinessException>(() => service.SaveUser(stale, null, Employee() with { Password = Password }, "过期后台权限测试"));
         Assert.Equal(403, denied.Status);
-        denied = await Assert.ThrowsAsync<BusinessException>(() => service.SaveUser(stale, null, Employee([Roles.Admin]) with { Password = Password }, "stale-admin-role"));
+        denied = await Assert.ThrowsAsync<BusinessException>(() => service.SaveUser(stale, null, Employee([Roles.Admin]) with { Password = Password }, "过期角色测试"));
         Assert.Equal(403, denied.Status);
         (await Send(fixture.Clients["admin"], HttpMethod.Put, $"/api/users/{id}", input with { Roles = [Roles.Worker], Password = null })).EnsureSuccessStatusCode();
         denied = await Assert.ThrowsAsync<BusinessException>(() => service.SaveUser(stale, null, Employee(), "stale-worker"));

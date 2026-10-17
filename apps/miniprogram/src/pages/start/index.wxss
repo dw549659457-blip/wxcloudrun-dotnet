@@ -1,5 +1,5 @@
 .start-page {
-  padding-top: 28px;
+  padding-top: 16px;
 }
 .brand-row {
   display: flex;
@@ -27,29 +27,21 @@
 .brand-copy .title {
   margin-bottom: 2px;
 }
-.start-intro {
-  margin: 24px 0;
-  color: #51664f;
-  font-size: 20px;
-  line-height: 1.7;
-}
-.start-intro-strong {
-  color: #294c36;
-}
 .entry-card {
-  padding: 20px;
+  padding: 16px;
   border-top: 3px solid #176747;
+  margin-top: 14px;
 }
 .entry-description {
   color: #51664f;
-  margin-top: 10px;
+  margin-top: 5px;
 }
 .entry-card .actions {
-  margin-top: 22px;
+  margin-top: 12px;
 }
 .candidate-card {
-  margin-top: 16px;
-  padding: 16px;
+  margin-top: 10px;
+  padding: 12px;
   background: #edf5e9;
   border-radius: 14px;
   overflow-wrap: anywhere;
@@ -57,14 +49,14 @@
 .candidate-name {
   font-size: 24px;
   font-weight: 700;
-  margin: 8px 0;
+  margin: 4px 0;
   color: #155b3a;
 }
 .entry-help {
   text-align: center;
   color: #51664f;
   font-size: 18px;
-  margin-top: 22px;
+  margin-top: 12px;
 }
 .entry-help .link-button {
   margin-top: 2px;

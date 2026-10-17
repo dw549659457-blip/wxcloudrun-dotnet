@@ -31,7 +31,7 @@ public sealed class QueryRepository(Database database, AppSettings settings)
     {
         actor.RequirePermission("users.read"); Validate(query);
         await using var connection = await database.Open();
-        var rows = await Database.Query(connection, null, "SELECT u.Id,u.Username,u.Name,u.Phone,u.Enabled,(u.OpenId IS NOT NULL) AS Bound,GROUP_CONCAT(r.Role ORDER BY r.Role) AS Roles FROM Users u LEFT JOIN UserRoles r ON r.UserId=u.Id GROUP BY u.Id ORDER BY u.Id LIMIT @limit OFFSET @offset", ("limit", query.PageSize), ("offset", (query.Page - 1) * query.PageSize));
+        var rows = await Database.Query(connection, null, "SELECT u.Id,u.Username,u.Name,u.Phone,u.Enabled,(u.OpenId IS NOT NULL) AS Bound,GROUP_CONCAT(r.Role ORDER BY r.Role) AS Roles FROM Users u LEFT JOIN UserRoles r ON r.UserId=u.Id WHERE (@admin=TRUE OR NOT EXISTS (SELECT 1 FROM UserRoles privileged WHERE privileged.UserId=u.Id AND privileged.Role='ADMIN')) GROUP BY u.Id ORDER BY u.Id LIMIT @limit OFFSET @offset", ("admin", actor.IsAdmin), ("limit", query.PageSize), ("offset", (query.Page - 1) * query.PageSize));
         return new { items = rows.Select(row => row.Output()), query.Page, query.PageSize };
     }
     public async Task<DocumentPage> Documents(Actor actor, string kind, PageQuery query)
@@ -149,7 +149,7 @@ public sealed class QueryRepository(Database database, AppSettings settings)
         else if (resource == "users")
         {
             module = "users";
-            sql = "SELECT u.Id,u.Username,u.Name,u.Phone,u.Enabled,(u.OpenId IS NOT NULL) AS Bound,GROUP_CONCAT(r.Role ORDER BY r.Role) AS Roles FROM Users u LEFT JOIN UserRoles r ON r.UserId=u.Id GROUP BY u.Id ORDER BY u.Id LIMIT 50001";
+            sql = "SELECT u.Id,u.Username,u.Name,u.Phone,u.Enabled,(u.OpenId IS NOT NULL) AS Bound,GROUP_CONCAT(r.Role ORDER BY r.Role) AS Roles FROM Users u LEFT JOIN UserRoles r ON r.UserId=u.Id WHERE (@admin=TRUE OR NOT EXISTS (SELECT 1 FROM UserRoles privileged WHERE privileged.UserId=u.Id AND privileged.Role='ADMIN')) GROUP BY u.Id ORDER BY u.Id LIMIT 50001";
         }
         else if (resource is "inventory-packaging" or "inventory-vegetables")
         {
@@ -169,7 +169,7 @@ public sealed class QueryRepository(Database database, AppSettings settings)
         await using var snapshot = await connection.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
         var rows = await Database.Query(connection, snapshot, sql, ("kind", kind), ("from", query.From?.ToString("yyyy-MM-dd")),
             ("to", query.To?.ToString("yyyy-MM-dd")), ("search", query.Search is null ? null : "%" + query.Search + "%"),
-            ("item", query.ItemId), ("grower", query.GrowerId), ("driver", query.DriverId));
+            ("item", query.ItemId), ("grower", query.GrowerId), ("driver", query.DriverId), ("admin", actor.IsAdmin));
         if (rows.Count > 50000) throw new BusinessException(422, "EXPORT_LIMIT", "导出超过 50,000 行，请缩小筛选范围");
         if (module == "documents")
         {

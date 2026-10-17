@@ -1,34 +1,29 @@
 .summary {
-  margin: 18px 0;
-  padding: 18px;
+  margin: 10px 0;
+  padding: 12px 14px;
   background: #fff;
   border: 1px solid #b8d3b6;
   border-top: 4px solid #176747;
-  border-radius: 18px;
+  border-radius: 14px;
   font-size: 20px;
   color: #20382b;
   box-sizing: border-box;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 .heading {
-  font-size: 24px;
+  font-size: 21px;
   font-weight: 700;
-  margin-bottom: 14px;
+  margin-bottom: 6px;
 }
 .line {
-  padding: 12px 0;
+  padding: 8px 0;
   border-top: 1px solid #dce7d6;
   overflow-wrap: anywhere;
 }
 .amount {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: #176747;
   overflow-wrap: anywhere;
-  margin-top: 6px;
-}
-.summary-caption {
-  font-size: 18px;
-  color: #51664f;
-  margin-bottom: 8px;
+  margin-top: 2px;
 }

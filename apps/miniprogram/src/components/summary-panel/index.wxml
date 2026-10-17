@@ -1,5 +1,5 @@
 <view class="summary"
-  ><view class="summary-caption">提交前，请逐项核对</view><view class="heading">{{title}}</view
+  ><view class="heading">{{title}}</view
   ><view wx:for="{{rows}}" wx:key="key" class="line"
     ><view>{{item.label}}</view><view class="amount">{{item.value}}</view></view
   ></view

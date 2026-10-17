@@ -1,7 +1,6 @@
 <view class="page form-page"
-  ><view class="title">{{stepTitle}}</view
-  ><view class="subtitle">输入实际出库的正数数量，两种方式都会扣库存。</view>
-  <view class="step-track" wx:if="{{!pending}}"><text class="step-pill {{!confirming ? 'step-current' : ''}}">① 填写本次</text><text class="step-pill {{confirming ? 'step-current' : ''}}">② 核对记账</text></view>
+  ><view class="title">{{confirming ? '核对' + stepTitle : stepTitle}}</view
+  ><view class="subtitle" wx:if="{{!confirming && !pending}}">实际出库量填正数</view>
   <view wx:if="{{error}}" class="error"
     >{{error}}<button wx:if="{{locked && !pending}}" bindtap="retryLoad">
       重新加载并核实
@@ -18,7 +17,8 @@
       继续确认原提交
     </button></view
   >
-  <view class="field"
+  <view wx:if="{{!confirming && !pending}}">
+  <view class="field date-field"
     ><text class="field-label">业务日期</text
     ><picker
       mode="date"
@@ -32,7 +32,7 @@
     ></view
   >
 
-  <view class="actions"
+  <view class="actions mode-actions"
     ><button
       class="{{document.mode === 'NORMAL' ? 'selected' : ''}}"
       data-mode="NORMAL"
@@ -46,7 +46,7 @@
       bindtap="chooseMode"
       disabled="{{locked || confirming}}"
     >
-      手工出库（报表显示负数）
+      手工出库
     </button></view
   >
   <view class="field"
@@ -99,6 +99,7 @@
       placeholder="填写来源或需要说明的情况"
       cursor-spacing="100"
     />
+  </view>
   </view>
   <view id="confirmation" wx:if="{{confirming}}"
     ><summary-panel rows="{{summary}}" /><summary-panel

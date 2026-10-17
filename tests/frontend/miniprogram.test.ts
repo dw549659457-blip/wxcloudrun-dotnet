@@ -144,6 +144,97 @@ describe('本机草稿隔离', () => {
   });
 });
 
+it('司机任务概览读取失败时仍保留派发录入入口', async () => {
+  const { api } = await import('../../apps/miniprogram/src/services/api');
+  saveSession({
+    userId: 7,
+    name: '司机甲',
+    roles: ['DRIVER'],
+    selectedRole: 'DRIVER',
+    token: 'driver-session',
+  });
+  const navigateTo = vi.fn();
+  vi.stubGlobal('wx', { ...wx, navigateTo });
+  const request = vi.spyOn(api, 'request').mockImplementation(async (_method, path) => {
+    if (path === '/api/auth/me') {
+      return { id: 7, name: '司机甲', roles: ['DRIVER'], selectedRole: 'DRIVER' } as never;
+    }
+    if (path.startsWith('/api/batches?')) {
+      throw new Error('任务暂时不可用');
+    }
+    throw new Error(`未预期的请求：${path}`);
+  });
+  type HomePage = {
+    data: { role: string; loading: boolean; error: string; overviewError: string };
+    setData(value: object): void;
+    onShow(): Promise<void>;
+    navigate(event: { currentTarget: { dataset: { url: string } } }): void;
+  };
+  let captured: HomePage | undefined;
+  vi.stubGlobal('Page', (page: HomePage) => {
+    captured = page;
+  });
+  try {
+    await import('../../apps/miniprogram/src/pages/home/index');
+    expect(captured).toBeDefined();
+    const page = { ...captured!, data: structuredClone(captured!.data) };
+    page.setData = (value) => Object.assign(page.data, value);
+    await page.onShow();
+    expect(page.data).toMatchObject({ role: 'DRIVER', loading: false, error: '' });
+    expect(page.data.overviewError).toContain('任务概览暂时无法读取');
+    page.navigate({ currentTarget: { dataset: { url: '/pages/dispatch/index' } } });
+    expect(navigateTo).toHaveBeenCalledWith({ url: '/pages/dispatch/index' });
+  } finally {
+    request.mockRestore();
+  }
+});
+
+it('司机在空任务列表也能新建派发，女工没有派发入口', async () => {
+  const { api } = await import('../../apps/miniprogram/src/services/api');
+  const navigateTo = vi.fn();
+  vi.stubGlobal('wx', { ...wx, navigateTo });
+  let role: 'DRIVER' | 'WORKER' = 'DRIVER';
+  const request = vi.spyOn(api, 'request').mockImplementation(async (_method, path) => {
+    if (path === '/api/auth/me') {
+      return { id: 7, name: '员工甲', roles: [role], selectedRole: role } as never;
+    }
+    if (path.startsWith('/api/batches?')) {
+      return { items: [], page: 1, pageSize: 20 } as never;
+    }
+    throw new Error(`未预期的请求：${path}`);
+  });
+  type BatchesPage = {
+    data: { canDispatch: boolean };
+    setData(value: object): void;
+    load(): Promise<void>;
+    newDispatch(): void;
+  };
+  let captured: BatchesPage | undefined;
+  vi.stubGlobal('Page', (page: BatchesPage) => {
+    captured = page;
+  });
+  try {
+    await import('../../apps/miniprogram/src/pages/batches/index');
+    expect(captured).toBeDefined();
+    const page = { ...captured!, data: structuredClone(captured!.data) };
+    page.setData = (value) => Object.assign(page.data, value);
+    saveSession({ userId: 7, name: '员工甲', roles: ['DRIVER'], selectedRole: 'DRIVER', token: 'driver-session' });
+    await page.load();
+    expect(page.data.canDispatch).toBe(true);
+    page.newDispatch();
+    expect(navigateTo).toHaveBeenCalledWith({ url: '/pages/dispatch/index' });
+
+    role = 'WORKER';
+    saveSession({ userId: 8, name: '员工乙', roles: ['WORKER'], selectedRole: 'WORKER', token: 'worker-session' });
+    const worker = { ...captured!, data: structuredClone(captured!.data) };
+    worker.setData = (value) => Object.assign(worker.data, value);
+    await worker.load();
+    expect(worker.data.canDispatch).toBe(false);
+  } finally {
+    request.mockRestore();
+  }
+});
+
 type StartPage = {
   data: {
     loading: boolean;

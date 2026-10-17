@@ -1,7 +1,6 @@
 <view class="page form-page"
-  ><view class="title">{{stepTitle}}</view
-  ><view class="subtitle">记空包装回收量，以及实际收到仓的蔬菜量。</view>
-  <view class="step-track" wx:if="{{!pending}}"><text class="step-pill {{!confirming ? 'step-current' : ''}}">① 填写本次</text><text class="step-pill {{confirming ? 'step-current' : ''}}">② 核对记账</text></view>
+  ><view class="title">{{confirming ? '核对' + stepTitle : stepTitle}}</view
+  ><view class="subtitle" wx:if="{{!confirming && !pending}}">填回收包装与实收蔬菜</view>
   <view wx:if="{{error}}" class="error"
     >{{error}}<button wx:if="{{locked && !pending}}" bindtap="retryLoad">
       重新加载并核实
@@ -18,7 +17,8 @@
       继续确认原提交
     </button></view
   >
-  <view class="field"
+  <view wx:if="{{!confirming && !pending}}">
+  <view class="field date-field"
     ><text class="field-label">业务日期</text
     ><picker
       mode="date"
@@ -33,7 +33,6 @@
   >
 
   <view class="card"
-    ><view class="caption">先核对棚户与任务</view
     ><view class="card-title">{{batchLabel || '还没选择棚户任务'}}</view
     ><button bindtap="chooseBatch" disabled="{{locked || confirming}}">
       {{batch ? '换一个棚户任务' : '选择棚户任务'}}</button
@@ -42,25 +41,25 @@
     ></view
   >
   <view class="section-title">这户是否已经收完？</view
-  ><view class="actions"
+  ><view class="actions mode-actions"
     ><button
       class="{{document.mode === 'PARTIAL' ? 'selected' : ''}}"
       data-mode="PARTIAL"
       bindtap="chooseMode"
       disabled="{{locked || confirming}}"
     >
-      这户还没收完（任务继续）</button
+      还没收完</button
     ><button
       class="{{document.mode === 'FINAL' ? 'selected' : ''}}"
       data-mode="FINAL"
       bindtap="chooseMode"
       disabled="{{locked || confirming}}"
     >
-      这户已经收完（结束任务）
+      已经收完
     </button></view
   >
   <view class="section-title">本次空包装回收</view
-  ><view class="caption">没有回收的品类留空。数量填本次，勿填累计。</view
+  ><view class="caption">只填本次数量</view
   ><quantity-row
     wx:for="{{document.items}}"
     wx:key="index"
@@ -145,6 +144,7 @@
       placeholder="填写来源或需要说明的情况"
       cursor-spacing="100"
     />
+  </view>
   </view>
   <view id="confirmation" wx:if="{{confirming}}"
     ><summary-panel rows="{{summary}}" /><summary-panel

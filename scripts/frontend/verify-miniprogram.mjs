@@ -93,7 +93,7 @@ export function verifyMiniprogram(projectDirectory) {
         exports: module.exports,
         require,
       });
-      if (fullPath === `${root}/config/runtime.js`) {
+      if (fullPath === resolve(root, 'config/runtime.js')) {
         Object.assign(module.exports.settings, overrides);
       }
       return module.exports;

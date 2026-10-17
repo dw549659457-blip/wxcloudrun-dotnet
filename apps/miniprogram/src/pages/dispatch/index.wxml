@@ -1,7 +1,6 @@
 <view class="page form-page"
-  ><view class="title">{{stepTitle}}</view
-  ><view class="subtitle">按棚户分组，填写这次送出的包装量。</view>
-  <view class="step-track" wx:if="{{!pending}}"><text class="step-pill {{!confirming ? 'step-current' : ''}}">① 填写本次</text><text class="step-pill {{confirming ? 'step-current' : ''}}">② 核对记账</text></view>
+  ><view class="title">{{confirming ? '核对' + stepTitle : stepTitle}}</view
+  ><view class="subtitle" wx:if="{{!confirming && !pending}}">按棚户填写本次包装</view>
   <view wx:if="{{error}}" class="error"
     >{{error}}<button wx:if="{{locked && !pending}}" bindtap="retryLoad">
       重新加载并核实
@@ -18,7 +17,8 @@
       继续确认原提交
     </button></view
   >
-  <view class="field"
+  <view wx:if="{{!confirming && !pending}}">
+  <view class="field date-field"
     ><text class="field-label">业务日期</text
     ><picker
       mode="date"
@@ -86,6 +86,7 @@
       placeholder="填写来源或需要说明的情况"
       cursor-spacing="100"
     />
+  </view>
   </view>
   <view id="confirmation" wx:if="{{confirming}}"
     ><summary-panel rows="{{summary}}" /><summary-panel

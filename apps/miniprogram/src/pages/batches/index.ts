@@ -23,6 +23,7 @@ Page({
     loading: false,
     error: '',
     canNext: false,
+    canDispatch: false,
   },
   onLoad(query: Record<string, string>) {
     this.setData({ target: ['work', 'recovery'].includes(query.for) ? query.for : 'view' });
@@ -34,9 +35,13 @@ Page({
     }
     this.setData({ loading: true, error: '', selected: null });
     try {
-      if (!(await requireSession())) {
+      const session = await requireSession();
+      if (!session) {
         return;
       }
+      this.setData({
+        canDispatch: session.selectedRole === 'DRIVER' && session.roles.includes('DRIVER'),
+      });
       const result = await api.request<PageResult<Batch>>(
         'GET',
         `/api/batches?${queryString({ page: this.data.page, pageSize: 20, search: this.data.search || undefined })}`,
@@ -81,6 +86,9 @@ Page({
       this.setData({ page: this.data.page + 1 });
       void this.load();
     }
+  },
+  newDispatch() {
+    wx.navigateTo({ url: '/pages/dispatch/index' });
   },
   async choose(event: TapEvent) {
     const id = Number(event.currentTarget.dataset.id);

@@ -55,7 +55,7 @@ await writeFile(
 );
 await cp(resolve(root, 'docs/miniprogram-import.md'), resolve(project, 'README-导入说明.md'));
 await cp(resolve(root, 'LICENSE'), resolve(project, 'LICENSE'));
-if (release.version === '1.2.2') {
+if (['1.2.2', '1.2.3'].includes(release.version)) {
   await cp(
     resolve(root, 'docs/backoffice-role-hierarchy.md'),
     resolve(project, '后台管理员职级说明.md'),
@@ -122,7 +122,7 @@ await writeFile(
 const archive = resolve(output, 'vegetable-miniprogram-import.zip');
 // Python 标准库生成 ZIP，不需要额外安装打包依赖。
 execFileSync(
-  'python3',
+  process.env.PYTHON_EXECUTABLE ?? (process.platform === 'win32' ? 'python' : 'python3'),
   [
     '-c',
     'import shutil,sys; shutil.make_archive(sys.argv[1], "zip", sys.argv[2], sys.argv[3])',

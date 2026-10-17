@@ -1,8 +1,6 @@
 <view class="page"
   ><view class="title"
     >{{success && detail.document.status === 'POSTED' ? '✓ 已记好' : title + '详情'}}</view
-  ><view wx:if="{{success && detail.document.status === 'POSTED'}}" class="notice"
-    >后台已确认成功，下面是本次正式单据。</view
   ><view wx:if="{{loading}}" class="notice">正在核实记录…</view
   ><view wx:if="{{error}}" class="error"
     >{{error}}<button bindtap="load" disabled="{{busy}}">重新加载记录</button></view

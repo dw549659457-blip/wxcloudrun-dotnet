@@ -1,5 +1,5 @@
 .admin-hero {
-  padding: 24px 20px;
+  padding: 14px 16px;
   background: #176747;
   color: white;
   border-radius: 18px;
@@ -9,7 +9,7 @@
 }
 .admin-hero .title {
   color: #fff;
-  margin: 10px 0;
+  margin: 0;
 }
 .stock-row,
 .notification-line {
@@ -17,7 +17,7 @@
   flex-wrap: wrap;
   gap: 8px;
   justify-content: space-between;
-  padding: 12px 0;
+  padding: 8px 0;
   border-bottom: 1px solid #edf1eb;
 }
 .stock-row > view,
@@ -34,11 +34,11 @@
 .notification-card {
   display: block;
   text-align: left;
-  margin: 14px 0;
-  padding: 20px;
+  margin: 10px 0;
+  padding: 14px;
   border: 1px solid #dce6d9;
   border-radius: 18px;
-  line-height: 1.65;
+  line-height: 1.5;
 }
 .notification-card .card-title {
   flex: 1;
@@ -48,7 +48,7 @@
   color: white;
 }
 .detail-link {
-  margin-top: 12px;
+  margin-top: 6px;
   color: #176747;
   font-weight: 600;
 }

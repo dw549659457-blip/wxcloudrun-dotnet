@@ -38,13 +38,13 @@ dotnet publish aspnetapp -c Release -o out/api
 
 ## 微信开发者工具导入
 
-**直接导入工程包**：运行 `pnpm package:miniprogram`，取得 `out/miniprogram-delivery/vegetable-miniprogram-1.2.1.zip`。解压后在开发者工具导入含 `project.config.json` 的 `vegetable-miniprogram` 目录，AppID 与 `miniprogram/config/runtime.js` 的 envId 已预填；不需要安装 Node.js 或“构建 npm”。具体步骤见 [工程包导入说明](miniprogram-import.md)。交付打包固定 cloud 模式并关闭开发登录，不会使用本机 `local.ts`。
+**直接导入工程包**：运行 `pnpm package:miniprogram`，取得 `out/miniprogram-delivery/vegetable-miniprogram-import.zip`（同时生成当前版本号的 ZIP）。解压后在开发者工具导入含 `project.config.json` 的 `vegetable-miniprogram` 目录，AppID 与 `miniprogram/config/runtime.js` 的 envId 已预填；不需要安装 Node.js 或“构建 npm”。具体步骤见 [工程包导入说明](miniprogram-import.md)。交付打包固定 cloud 模式并关闭开发登录，不会使用本机 `local.ts`。
 
 以下是源码开发方式：
 
-1. 将 `apps/miniprogram/src/config/settings.ts` 复制为同目录 `local.ts`（已忽略），填写本人的 `envId`。从微信云托管控制台的 **小程序调用示例 `config.env`** 复制实际值，不能用服务名、环境名称或数据库地址替代。服务名暂按用户日志 `dotnet-4jwm`，仍以实际 `X-WX-SERVICE` 值为准。
+1. 将 `apps/miniprogram/src/config/settings.ts` 复制为同目录 `local.ts`（已忽略），填写本人的 `envId`。从微信云托管控制台的 **小程序调用示例 `config.env`** 复制实际值，不能用服务名、环境名称或数据库地址替代。服务名以控制台实际 `X-WX-SERVICE` 值为准。
 2. 正式使用 `mode: 'cloud'`、`developmentLogin: false`。保持 HTTPS 校验开关启用。生产通过 `wx.cloud.callContainer`，不依赖直接请求云托管公网域名。
-3. 在微信开发者工具导入 **仓库的 `apps/miniprogram` 目录**，使用已预填的 AppID `wx336b5ac8bed80159`。云环境默认 `prod-d7glkv54o7189eae7`，服务名 `dotnet-4jwm`，均由用户提供；更换环境时再调整公开配置，勿把 AppSecret 放进此目录。
+3. 在微信开发者工具导入 **仓库的 `apps/miniprogram` 目录**。AppID、云环境和服务名从项目配置与本人控制台核对；更换环境时调整公开配置，勿把 AppSecret 放进此目录。
 4. 编译前在仓库根目录执行 `pnpm build:miniprogram`。生成的 `apps/miniprogram/miniprogram` 含 `app.js/app.json`、14 个原生页面的 JS/WXML/JSON、共用 app.wxss 和2个原生组件。`project.config.json` 的 `miniprogramRoot` 已指向该目录，无须“构建 npm”。配置集中在 `miniprogram/config/runtime.js`，直接修改此文件后点击编译即可；修改 TS 源码时重新构建，构建将覆盖生成的配置文件。
 5. 小程序与现有云托管环境建立关联；后端控制台设置匹配 AppID 的 `WECHAT_APP_ID`、`WECHAT_APP_SECRET`，管理员先建立员工姓名、唯一手机号与岗位。小程序不填写数据库地址、密码、AppSecret、openid 或角色。
 
@@ -54,7 +54,7 @@ dotnet publish aspnetapp -c Release -o out/api
 export const settings = {
   mode: 'cloud' as 'cloud' | 'local',
   envId: '从本人控制台复制实际环境ID',
-  serviceName: 'dotnet-4jwm',
+  serviceName: '从控制台复制服务名',
   apiBaseUrl: 'http://127.0.0.1:8080', // cloud 模式不使用此地址
   administratorPhone: '',            // 可填管理员工作电话
   developmentLogin: false,

@@ -288,6 +288,7 @@ const scenarios = [
     'batches',
     {
       loading: false,
+      canDispatch: true,
       rows: [
         {
           id: 1,
@@ -369,7 +370,7 @@ const scenarios = [
     },
   ],
   ['help', 'help', { role: 'WORKER', roleName: '装菜人员' }],
-  ['empty-batches', 'batches', {}],
+  ['empty-batches', 'batches', { canDispatch: true }],
   ['empty-records', 'records', { title: '派发' }],
 ];
 const browser = await chromium.launch({
@@ -379,6 +380,7 @@ const browser = await chromium.launch({
   headless: true,
 });
 const checks = [];
+const selectedScenarios = process.env.MINIPROGRAM_UI_SCENARIOS?.split(',').filter(Boolean);
 try {
   const page = await browser.newPage();
   for (const [width, scale] of [
@@ -388,7 +390,9 @@ try {
     [320, 1.25],
   ]) {
     await page.setViewportSize({ width, height: 820 });
-    for (const [name, pageName, overrides] of scenarios) {
+    for (const [name, pageName, overrides] of scenarios.filter(
+      ([name]) => !selectedScenarios || selectedScenarios.includes(name),
+    )) {
       const native = project.runtime();
       native.load(`${root}/app.js`);
       native.load(`${root}/pages/${pageName}/index.js`);
@@ -561,6 +565,12 @@ try {
           const start = visible.find(
             (element) => element.tagName === 'BUTTON' && element.textContent.trim() === '开始使用',
           );
+          const driverAction = visible.find((element) => element.matches('.task-button.primary'));
+          const confirmationAction = visible.find(
+            (element) =>
+              element.tagName === 'BUTTON' && element.textContent.includes('确认收完，记账并结束这户'),
+          );
+          const firstInventoryRow = visible.find((element) => element.matches('.inventory-row'));
           return {
             scrollWidth: document.documentElement.scrollWidth,
             outside,
@@ -574,6 +584,11 @@ try {
               .map((element) => element.textContent),
             quantityInputs,
             startBottom: start?.getBoundingClientRect().bottom,
+            driverActionWidth: driverAction?.getBoundingClientRect().width,
+            driverActionBottom: driverAction?.getBoundingClientRect().bottom,
+            confirmationActionBottom: confirmationAction?.getBoundingClientRect().bottom,
+            visibleInputs: visible.filter((element) => element.tagName === 'INPUT').length,
+            inventoryRowHeight: firstInventoryRow?.getBoundingClientRect().height,
           };
         },
         {
@@ -609,6 +624,21 @@ try {
           `开始使用按钮应在初始屏幕可见：${width}/${scale}，底部${metrics.startBottom}`,
         );
       }
+      if (name === 'home-driver') {
+        assert(
+          metrics.driverActionWidth >= width - 50 && metrics.driverActionBottom < 430,
+          `司机派发入口应占满内容宽度并在首屏：${width}/${scale}`,
+        );
+      }
+      if (name === 'recovery-confirm' && width === 375) {
+        assert(
+          metrics.visibleInputs === 0 && metrics.confirmationActionBottom < 820,
+          '核对页应直接显示摘要与确认按钮',
+        );
+      }
+      if (name === 'inventory') {
+        assert(metrics.inventoryRowHeight < 200, '长品类名不应被挤成竖排');
+      }
       checks.push({ name, width, scale, passed: true });
       if (
         width === 375 &&
@@ -616,6 +646,7 @@ try {
         [
           'start',
           'home-driver',
+          'batches',
           'work',
           'recovery-confirm',
           'inventory',
